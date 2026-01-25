@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id            Int           @id @default(autoincrement())
+  email         String        @unique
+  username      String        @unique
+  password      String
+  name          String?
+  bio           String?       @default("Quantum Explorer in the SynapseX Realm")
+  profileImage  String?       // No default value as requested
+  role          Role          @default(USER)
+  riskScore     Float?        @default(0.0)
+  lastLogin     DateTime?
+  posts         Post[]
+  likes         Like[]
+  comments      Comment[]
+  stories       Story[]
+  savedPosts    SavedPost[]
+  followers     Follow[]      @relation("Following")
+  following     Follow[]      @relation("Follower")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Post {
+  id          Int         @id @default(autoincrement())
+  caption     String?
+  imageUrl    String
+  userId      Int
+  user        User        @relation(fields: [userId], references: [id])
+  likes       Like[]
+  comments    Comment[]
+  savedBy     SavedPost[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Follow {
+  id          Int      @id @default(autoincrement())
+  followerId  Int
+  followingId Int
+  follower    User     @relation("Follower", fields: [followerId], references: [id])
+  following   User     @relation("Following", fields: [followingId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  userId    Int
+  postId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Story {
+  id        Int      @id @default(autoincrement())
+  imageUrl  String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model SavedPost {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+}

@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply bg-[#0a0a0a] min-h-screen selection:bg-emerald-500/30;
+    }
+}
+
+@layer components {
+    .glass-card {
+        background: rgba(18, 18, 18, 0.7);
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .glass-input {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        @apply transition-all duration-200 focus:border-emerald-500/50 focus:ring-0 outline-none rounded-lg py-3 px-10 w-full text-sm text-gray-200;
+    }
+
+    .login-btn {
+        background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s;
+        transform-origin: center;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    }
+
+    .login-btn:hover {
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+    }
+
+    .login-btn:active {
+        transform: scale(0.98);
+    }
+
+    .signup-btn {
+        background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s;
+        transform-origin: center;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    }
+
+    .signup-btn:hover {
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+    }
+
+    .signup-btn:active {
+        transform: scale(0.98);
+    }
+
+    .social-btn {
+        @apply flex items-center justify-center gap-2 bg-white/5 border border-white/10 rounded-lg p-2 transition-all hover:bg-white/10 grayscale hover:grayscale-0;
+    }
+
+    /* Instagram Specific Styles */
+    .story-ring {
+        background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        padding: 2.5px;
+        @apply rounded-full;
+    }
+
+    .sidebar-link {
+        @apply flex items-center gap-4 px-6 py-4 text-gray-500 hover:text-emerald-400 transition-all border-l-2 border-transparent hover:border-emerald-500 hover:bg-emerald-500/5 cursor-pointer;
+    }
+
+    .sidebar-link.active {
+        @apply text-emerald-400 border-emerald-500 bg-emerald-500/5;
+    }
+
+    .post-card {
+        @apply bg-[#111] border border-white/5 rounded-3xl overflow-hidden mb-8;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .stats-item {
+        @apply flex flex-col items-center justify-center;
+    }
+
+    .stats-value {
+        @apply text-lg font-bold text-white;
+    }
+
+    .stats-label {
+        @apply text-[9px] uppercase tracking-widest text-gray-500;
+    }
+
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+}
+
+/* Custom animations */
+@keyframes float {
+    0% {
+        transform: translateY(0px) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-20px) rotate(2deg);
+    }
+
+    100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+}
+
+.floating {
+    animation: float 6s ease-in-out infinite;
+}
