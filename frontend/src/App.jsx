@@ -30,52 +30,57 @@ function App() {
     const [isExited, setIsExited] = useState(false);
     const [isShuttingDown, setIsShuttingDown] = useState(false);
 
-    // THE LIVE BACKEND GATEWAY
     const LIVE_API = "https://synapse-backend.pralayd140.workers.dev";
 
     useEffect(() => {
-        const verifyNeuralSession = async () => {
+        const verifySessionGhost = async () => {
+            // 1. Check for the Session Ghost (Vanishes when tab closes)
+            const token = sessionStorage.getItem('synapse_session_token');
+
+            if (!token) {
+                setTimeout(() => setIsLoading(false), 800);
+                return;
+            }
+
             try {
-                // Perform a direct link check via Secure Cookies
+                // 2. Validate with Neural Core
                 const response = await fetch(`${LIVE_API}/api/auth/me`, {
                     method: 'GET',
-                    credentials: 'include'
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (response.ok) {
                     const data = await response.json();
                     setUser(data.user);
                     setView('profile');
-                    console.log("Neural link restored via secure cookies.");
+                    console.log("Neural Ghost Synchronized.");
                 } else {
+                    sessionStorage.removeItem('synapse_session_token');
                     setView('landing');
                 }
             } catch (error) {
-                console.warn("Neural sync failed. Network connectivity or session expired.");
+                console.error("Neural sync interrupted.");
                 setView('landing');
             } finally {
-                setTimeout(() => setIsLoading(false), 1500);
+                setTimeout(() => setIsLoading(false), 1200);
             }
         };
 
-        verifyNeuralSession();
+        verifySessionGhost();
     }, []);
 
     const handleLoginSuccess = (loginData) => {
-        const { user: userData } = loginData;
+        const { user: userData, token } = loginData;
         setUser(userData);
+        // Save to Session Ghost ( survives refresh, dies on tab close )
+        if (token) sessionStorage.setItem('synapse_session_token', token);
         setView('profile');
     };
 
     const handleLogout = async () => {
-        try {
-            await fetch(`${LIVE_API}/api/auth/logout`, {
-                method: 'POST',
-                credentials: 'include'
-            });
-        } catch (error) { }
-
+        try { await fetch(`${LIVE_API}/api/auth/logout`, { method: 'POST', credentials: 'include' }); } catch (e) { }
         setUser(null);
+        sessionStorage.removeItem('synapse_session_token');
         setView('landing');
     };
 
@@ -99,9 +104,7 @@ function App() {
             <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 text-center">
                 <SynapseLogo size={40} />
                 <h1 className="text-2xl font-bold tracking-tighter text-white mb-2 italic mt-8">Connection Severed</h1>
-                <button onClick={() => setIsExited(false)} className="mt-16 text-[9px] text-gray-700 hover:text-emerald-500/50 uppercase tracking-[0.3em] font-bold transition-colors">
-                    [ Re-initialize Link ]
-                </button>
+                <button onClick={() => setIsExited(false)} className="mt-16 text-[9px] text-gray-700 hover:text-emerald-500/50 uppercase tracking-[0.3em] font-bold transition-colors"> [ Re-initialize Link ] </button>
             </div>
         );
     }
