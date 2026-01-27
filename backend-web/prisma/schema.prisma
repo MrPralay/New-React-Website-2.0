@@ -32,6 +32,7 @@ model User {
   savedPosts    SavedPost[]
   followers     Follow[]      @relation("Following")
   following     Follow[]      @relation("Follower")
+  sessions      Session[]
   isVerified    Boolean       @default(false)
   otp           String?
   otpExpires    DateTime?
@@ -102,4 +103,15 @@ model SavedPost {
   createdAt DateTime @default(now())
 
   @@unique([userId, postId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id])
+  userAgent    String?
+  ipAddress    String?
+  lastActive   DateTime @default(now())
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
 }

@@ -144,9 +144,24 @@ export const login = async (c) => {
             { expiresIn: '2h' }
         );
 
+        // CREATE PROFESSIONAL SESSIONID (Like Instagram/Facebook)
+        const userAgent = c.req.header('user-agent');
+        const ipAddress = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'local';
+        const sessionExpires = new Date(Date.now() + 2 * 60 * 60 * 1000);
+
+        const session = await prisma.session.create({
+            data: {
+                userId: user.id,
+                userAgent,
+                ipAddress,
+                expiresAt: sessionExpires
+            }
+        });
+
         return c.json({
             success: true,
             token,
+            sessionId: session.id,
             user: {
                 id: user.id,
                 username: user.username,
