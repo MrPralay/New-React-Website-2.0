@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import Cookies from 'js-cookie';
 import LoginBox from './components/Login/LoginBox';
 import SignUpBox from './components/Login/SignUpBox';
 import OTPBox from './components/Login/OTPBox';
@@ -29,9 +30,9 @@ function App() {
 
     useEffect(() => {
         const performNeuralSync = async () => {
-            // Restore from Session (survives refreshes)
-            const token = sessionStorage.getItem('synapse_session_token');
-            const savedUser = sessionStorage.getItem('synapse_session_user');
+            // Restore from Cookies (survives refreshes and browser sessions)
+            const token = Cookies.get('synapse_session_token');
+            const savedUser = Cookies.get('synapse_session_user');
 
             if (!token) {
                 setTimeout(() => setIsLoading(false), 800);
@@ -49,12 +50,17 @@ function App() {
                     const data = await response.json();
                     setUser(data.user);
                     setView('profile');
-                    sessionStorage.setItem('synapse_session_user', JSON.stringify(data.user));
+                    // Refresh cookie with new user data
+                    Cookies.set('synapse_session_user', JSON.stringify(data.user), { 
+                        expires: 7, // 7 days
+                        secure: true,
+                        sameSite: 'strict'
+                    });
                 } else if (response.status === 401 || response.status === 403) {
                     // Only log out if the session is explicitly invalid
                     handleLogout();
                 } else if (savedUser) {
-                    // If server is just slow/down, use the last known profile from session
+                    // If server is just slow/down, use the last known profile from cookies
                     setUser(JSON.parse(savedUser));
                     setView('profile');
                 }
@@ -74,15 +80,29 @@ function App() {
     const handleLoginSuccess = (loginData) => {
         const { user: userData, token } = loginData;
         setUser(userData);
-        if (token) sessionStorage.setItem('synapse_session_token', token);
-        sessionStorage.setItem('synapse_session_user', JSON.stringify(userData));
+        if (token) {
+            // Set secure authentication token cookie
+            Cookies.set('synapse_session_token', token, { 
+                expires: 7, // 7 days
+                secure: true,
+                sameSite: 'strict'
+            });
+        }
+        // Set user data cookie
+        Cookies.set('synapse_session_user', JSON.stringify(userData), { 
+            expires: 7, // 7 days
+            secure: true,
+            sameSite: 'strict'
+        });
         setView('profile');
     };
 
     const handleLogout = async () => {
         try { await fetch(`${LIVE_API}/api/auth/logout`, { method: 'POST' }); } catch (e) { }
         setUser(null);
-        sessionStorage.clear();
+        // Clear all authentication cookies
+        Cookies.remove('synapse_session_token');
+        Cookies.remove('synapse_session_user');
         setView('landing');
     };
 
