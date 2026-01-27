@@ -35,7 +35,7 @@ function App() {
             const savedUser = Cookies.get('synapse_session_user');
 
             if (!token) {
-                setTimeout(() => setIsLoading(false), 800);
+                setIsLoading(false);
                 return;
             }
 
@@ -99,7 +99,7 @@ function App() {
                 handleLogout();
                 userLoggedIn = false;
             } finally {
-                setTimeout(() => setIsLoading(false), 1200);
+                setIsLoading(false);
             }
         };
 
