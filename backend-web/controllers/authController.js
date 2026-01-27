@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { setCookie, deleteCookie } from 'hono/cookie';
 import getPrisma from '../prisma/db.js';
 import { sendOTP, sendResetOTP } from '../utils/email.js';
 
@@ -253,8 +254,9 @@ export const resetPassword = async (c) => {
 
 export const logout = async (c) => {
     try {
-        // No cookies to clear on backend as they are managed by frontend
-        // If you ever use httpOnly cookies again, clear them here.
+        // Explicitly clear the legacy SameSite: None cookies from the backend domain
+        deleteCookie(c, 'session_id', { path: '/', secure: true, sameSite: 'None' });
+        deleteCookie(c, 'synapse_token', { path: '/', secure: true, sameSite: 'None' });
 
         return c.json({
             success: true,
