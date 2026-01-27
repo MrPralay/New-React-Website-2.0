@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import getPrisma from '../prisma/db.js';
+import { sendOTP } from '../utils/email.js';
 
 export const register = async (c) => {
     try {
@@ -12,6 +13,10 @@ export const register = async (c) => {
             return c.json({ success: false, error: "Missing required fields" }, 400);
         }
 
+        // Generate 4-digit OTP
+        const otp = Math.floor(1000 + Math.random() * 9000).toString();
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await prisma.user.create({
@@ -20,14 +25,21 @@ export const register = async (c) => {
                 username,
                 email,
                 password: hashedPassword,
-                role: email.includes('admin') ? 'ADMIN' : 'USER'
+                role: email.includes('admin') ? 'ADMIN' : 'USER',
+                otp,
+                otpExpires,
+                isVerified: false
             }
         });
 
+        // Send OTP via email
+        const emailSent = await sendOTP(email, otp, c.env);
+
         return c.json({
             success: true,
-            message: "Neural fingerprint created successfully",
-            userId: user.id
+            message: emailSent ? "Neural access code transmitted to your email" : "User created but failed to send verification code",
+            userId: user.id,
+            email: user.email
         }, 201);
     } catch (error) {
         console.error("Registration Error:", error);
@@ -44,6 +56,44 @@ export const register = async (c) => {
     }
 };
 
+export const verifyOTP = async (c) => {
+    try {
+        const { email, otp } = await c.req.json();
+        const prisma = getPrisma(c.env.DATABASE_URL);
+
+        const user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user) {
+            return c.json({ success: false, error: "Neural record not found" }, 404);
+        }
+
+        if (user.otp !== otp) {
+            return c.json({ success: false, error: "Invalid neural access code" }, 400);
+        }
+
+        if (new Date() > user.otpExpires) {
+            return c.json({ success: false, error: "Neural code expired" }, 400);
+        }
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                isVerified: true,
+                otp: null,
+                otpExpires: null
+            }
+        });
+
+        return c.json({
+            success: true,
+            message: "Neural link established successfully"
+        });
+    } catch (error) {
+        console.error("OTP Verification Error:", error);
+        return c.json({ success: false, error: "Verification process failed" }, 500);
+    }
+};
+
 export const login = async (c) => {
     try {
         const { email, password, behaviorData } = await c.req.json();
@@ -56,6 +106,12 @@ export const login = async (c) => {
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user || !(await bcrypt.compare(password, user.password))) {
             return c.json({ success: false, error: "Access Denied: Neural mismatch" }, 401);
+        }
+
+        if (!user.isVerified) {
+            // Optional: Re-send OTP if not verified? 
+            // For now just block.
+            return c.json({ success: false, error: "Neural link not verified. Please check your email." }, 403);
         }
 
         let riskScore = 0.0;

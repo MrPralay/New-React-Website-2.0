@@ -1,12 +1,18 @@
 # Environment variables
 .env
 .env.*
+.dev.vars
 !.env.example
 
 # Dependencies
 node_modules/
+**/node_modules/
 dist/
+**/dist/
 build/
+**/.wrangler/
+
+# Python
 .venv/
 venv/
 env/

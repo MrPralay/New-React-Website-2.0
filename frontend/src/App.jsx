@@ -2,16 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import LoginBox from './components/Login/LoginBox';
 import SignUpBox from './components/Login/SignUpBox';
+import OTPBox from './components/Login/OTPBox';
 import LandingPage from './components/Login/LandingPage';
 import InstagramLayout from './components/Social/InstagramLayout';
 
 function App() {
     const [view, setView] = useState('landing');
     const [user, setUser] = useState(null);
+    const [otpEmail, setOtpEmail] = useState('');
     const [isExited, setIsExited] = useState(false);
     const [isShuttingDown, setIsShuttingDown] = useState(false);
 
-    // Initial check for session (localStorage) - Optional for now
     useEffect(() => {
         const storedUser = localStorage.getItem('synapse_user');
         if (storedUser) {
@@ -24,6 +25,15 @@ function App() {
         setUser(userData);
         localStorage.setItem('synapse_user', JSON.stringify(userData));
         setView('profile');
+    };
+
+    const handleRegistrationSuccess = (email) => {
+        setOtpEmail(email);
+        setView('otp');
+    };
+
+    const handleOTPVerified = () => {
+        setView('login');
     };
 
     const handleLogout = () => {
@@ -78,7 +88,6 @@ function App() {
                 if (isShuttingDown) {
                     setIsExited(true);
                     setIsShuttingDown(false);
-                    // Attempt to close the window
                     try {
                         window.close();
                     } catch (e) {
@@ -132,6 +141,23 @@ function App() {
                         <SignUpBox
                             onSwitch={() => setView('login')}
                             onBack={() => setView('landing')}
+                            onSuccess={handleRegistrationSuccess}
+                        />
+                    </motion.div>
+                )}
+                {view === 'otp' && (
+                    <motion.div
+                        key="otp"
+                        variants={pageVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        transition={{ duration: 0.4 }}
+                    >
+                        <OTPBox
+                            email={otpEmail}
+                            onVerified={handleOTPVerified}
+                            onBack={() => setView('signup')}
                         />
                     </motion.div>
                 )}

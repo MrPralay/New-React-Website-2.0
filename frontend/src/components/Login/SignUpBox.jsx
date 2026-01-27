@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import bgImage from '../../assets/dark_floating_pyramids_bg.png';
 import sideImage from '../../assets/green_pyramid_login.png';
 
-const SignUpBox = ({ onSwitch, onBack }) => {
+const SignUpBox = ({ onSwitch, onBack, onSuccess }) => {
     const [formData, setFormData] = useState({ name: '', username: '', email: '', password: '', confirmPassword: '' });
     const [status, setStatus] = useState({ type: '', message: '' });
 
@@ -33,8 +33,8 @@ const SignUpBox = ({ onSwitch, onBack }) => {
 
             const data = await response.json();
             if (response.ok) {
-                setStatus({ type: 'success', message: 'Neural Print Saved! Redirecting to login...' });
-                setTimeout(() => onSwitch(), 2000);
+                setStatus({ type: 'success', message: 'Neural Print Saved! Verification Code Sent.' });
+                setTimeout(() => onSuccess(formData.email), 1500);
             } else {
                 setStatus({ type: 'error', message: data.error });
             }
