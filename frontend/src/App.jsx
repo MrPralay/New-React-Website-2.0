@@ -39,14 +39,20 @@ function App() {
                 return;
             }
 
+            // SECURE APPROACH: Use cached data but verify with API
+            let userLoggedIn = false;
+            
             // If we have cached user data, use it immediately for better UX
             if (savedUser) {
                 try {
                     const userData = JSON.parse(savedUser);
                     setUser(userData);
                     setView('profile');
+                    userLoggedIn = true;
+                    console.log('User logged in from cached data (pending verification)');
                 } catch (e) {
                     console.error('Failed to parse saved user data:', e);
+                    Cookies.remove('synapse_session_user');
                 }
             }
 
@@ -61,6 +67,7 @@ function App() {
                     const data = await response.json();
                     setUser(data.user);
                     setView('profile');
+                    userLoggedIn = true;
                     // Refresh cookie with new user data
                     Cookies.set('synapse_session_user', JSON.stringify(data.user), { 
                         expires: 7, // 7 days
@@ -69,15 +76,28 @@ function App() {
                     });
                 } else if (response.status === 401 || response.status === 403) {
                     console.warn('Token invalid, logging out...');
-                    // Only log out if the session is explicitly invalid
+                    // SECURITY: Always logout on invalid tokens
                     handleLogout();
+                    userLoggedIn = false;
                 } else {
-                    console.warn('API call failed but keeping user logged in:', response.status);
-                    // Keep user logged in with cached data
+                    console.warn('Server error but keeping user logged in temporarily');
+                    // SECURITY: Keep user logged in for server errors (5xx) but not network failures
+                    if (response.status >= 500) {
+                        // Server is down but will come back - keep user logged in
+                        console.log('Server error (5xx) - keeping user logged in');
+                    } else {
+                        // Other client errors - logout for security
+                        handleLogout();
+                        userLoggedIn = false;
+                    }
                 }
             } catch (err) {
-                console.error('API call failed, using cached data:', err);
-                // Keep user logged in with cached data - don't log out
+                console.error('Network error - cannot verify session');
+                // SECURITY: Network failure means we cannot verify the session
+                // Logout user for security since we can't verify the token
+                console.log('Network failure - logging out for security');
+                handleLogout();
+                userLoggedIn = false;
             } finally {
                 setTimeout(() => setIsLoading(false), 1200);
             }
