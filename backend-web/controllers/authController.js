@@ -40,7 +40,7 @@ export const register = async (c) => {
         }, 201);
     } catch (error) {
         console.error("Registration Error:", error);
-        return c.json({ success: false, error: "Neural link failure", details: error.message }, 500);
+        return c.json({ success: false, error: `Neural link failure: ${error.message}` }, 500);
     }
 };
 
@@ -150,6 +150,6 @@ export const login = async (c) => {
         });
     } catch (error) {
         console.error("Login Error:", error);
-        return c.json({ success: false, error: "Neural link failure", details: error.message }, 500);
+        return c.json({ success: false, error: `Neural link failure: ${error.message}` }, 500);
     }
 };

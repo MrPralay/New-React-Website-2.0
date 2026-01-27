@@ -36,7 +36,8 @@ const SignUpBox = ({ onSwitch, onBack, onSuccess }) => {
                 setStatus({ type: 'success', message: 'Neural Print Saved! Verification Code Sent.' });
                 setTimeout(() => onSuccess(formData.email), 1500);
             } else {
-                setStatus({ type: 'error', message: data.error });
+                const errorMessage = data.details ? `${data.error}: ${data.details}` : data.error;
+                setStatus({ type: 'error', message: errorMessage });
             }
         } catch (error) {
             setStatus({ type: 'error', message: 'Neural Gateway Offline' });

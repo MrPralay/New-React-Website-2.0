@@ -71,7 +71,8 @@ const LoginBox = ({ onSwitch, onBack, onLoginSuccess }) => {
                 setStatus({ type: 'success', message: 'Identity Confirmed. Accessing Synapse...' });
                 setTimeout(() => onLoginSuccess(data.user), 1500);
             } else {
-                setStatus({ type: 'error', message: data.error });
+                const errorMessage = data.details ? `${data.error}: ${data.details}` : data.error;
+                setStatus({ type: 'error', message: errorMessage });
             }
         } catch (error) {
             setStatus({ type: 'error', message: 'Connection to AI Hub failed' });
