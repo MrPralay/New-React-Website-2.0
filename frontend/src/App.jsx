@@ -21,15 +21,15 @@ const SynapseLogo = ({ size = 60 }) => (
 
 function App() {
     const [user, setUser] = useState(null);
-    const [view, setView] = useState('landing');
+    const [view, setView] = useState(() => localStorage.getItem('synapse_last_view') || 'landing');
     const [isLoading, setIsLoading] = useState(true);
     const [isExited, setIsExited] = useState(false);
     const [otpEmail, setOtpEmail] = useState('');
 
-    // Track view changes for debugging
+    // Persist view to localStorage
     useEffect(() => {
-        console.log('👀 View changed to:', view, 'at', new Date().toISOString());
-        console.trace('View change stack trace');
+        localStorage.setItem('synapse_last_view', view);
+        console.log('👀 View changed to:', view);
     }, [view]);
 
     const LIVE_API = "https://synapse-backend.pralayd140.workers.dev";
@@ -39,7 +39,7 @@ function App() {
             // Restore from Cookies (survives refreshes and browser sessions)
             const token = Cookies.get('synapse_session_token');
             const savedUser = Cookies.get('synapse_session_user');
-            
+
             // Debug all cookies
             console.log('🍪 All Cookies Debug:', {
                 allCookies: document.cookie,
@@ -47,7 +47,7 @@ function App() {
                 synapseUser: savedUser,
                 cookiesObject: Cookies.get()
             });
-            
+
             console.log('🔍 Token Debug:', {
                 hasToken: !!token,
                 tokenLength: token ? token.length : 0,
@@ -56,13 +56,14 @@ function App() {
             });
 
             if (!token) {
+                if (view === 'profile') setView('landing');
                 setTimeout(() => setIsLoading(false), 800);
                 return;
             }
 
             // SECURE APPROACH: Use cached data but verify with API
             let userLoggedIn = false;
-            
+
             // If we have cached user data, use it immediately for better UX
             if (savedUser) {
                 try {
@@ -102,7 +103,7 @@ function App() {
                     setView('profile');
                     userLoggedIn = true;
                     // Refresh cookie with new user data
-                    Cookies.set('synapse_session_user', JSON.stringify(data.user), { 
+                    Cookies.set('synapse_session_user', JSON.stringify(data.user), {
                         expires: 7, // 7 days
                         secure: true,
                         sameSite: 'strict'
@@ -152,7 +153,7 @@ function App() {
         setUser(userData);
         if (token) {
             // Set secure authentication token cookie
-            Cookies.set('synapse_session_token', token, { 
+            Cookies.set('synapse_session_token', token, {
                 expires: 7, // 7 days
                 secure: true,
                 sameSite: 'strict'
@@ -160,7 +161,7 @@ function App() {
             console.log('🍪 Token cookie set successfully');
         }
         // Set user data cookie
-        Cookies.set('synapse_session_user', JSON.stringify(userData), { 
+        Cookies.set('synapse_session_user', JSON.stringify(userData), {
             expires: 7, // 7 days
             secure: true,
             sameSite: 'strict'
@@ -173,10 +174,13 @@ function App() {
         console.log('🚪 LOGOUT TRIGGERED - Stack trace:', new Error().stack);
         try { await fetch(`${LIVE_API}/api/auth/logout`, { method: 'POST' }); } catch (e) { }
         setUser(null);
-        // Clear all authentication cookies
+        // Clear all persistent states
         Cookies.remove('synapse_session_token');
         Cookies.remove('synapse_session_user');
-        console.log('🧹 Cookies cleared, setting view to landing');
+        localStorage.removeItem('synapse_last_view');
+        localStorage.removeItem('synapse_social_tab');
+
+        console.log('Sweep complete, returning to landing');
         setView('landing');
     };
 

@@ -6,10 +6,15 @@ import RightSidebar from './RightSidebar';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const InstagramLayout = ({ currentUser, onLogout }) => {
-    const [view, setView] = useState('feed'); // feed, profile, explore, etc.
+    const [view, setView] = useState(() => localStorage.getItem('synapse_social_tab') || 'feed'); // feed, profile, explore, etc.
     const [posts, setPosts] = useState([]);
     const [userProfile, setUserProfile] = useState(currentUser);
     const [loading, setLoading] = useState(false);
+
+    // Persist social tab to localStorage
+    useEffect(() => {
+        localStorage.setItem('synapse_social_tab', view);
+    }, [view]);
 
     // Data loading from API
     useEffect(() => {
