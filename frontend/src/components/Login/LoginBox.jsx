@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
 import { Mail, Lock, Target, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+// Import Assets for Production Build
+import bgImage from '../../assets/dark_floating_pyramids_bg.png';
+import sideImage from '../../assets/green_pyramid_login.png';
 
 const LoginBox = ({ onSwitch, onBack, onLoginSuccess }) => {
     const [formData, setFormData] = useState({ email: '', password: '' });
@@ -48,7 +51,8 @@ const LoginBox = ({ onSwitch, onBack, onLoginSuccess }) => {
         setStatus({ type: 'loading', message: 'Analyzing Neural Patterns...' });
 
         try {
-            const response = await fetch('http://localhost:5000/api/login', {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const response = await fetch(`${apiUrl}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -78,7 +82,7 @@ const LoginBox = ({ onSwitch, onBack, onLoginSuccess }) => {
             {/* Background Floating Elements */}
             <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
                 <img
-                    src="/src/assets/dark_floating_pyramids_bg.png"
+                    src={bgImage}
                     alt="background"
                     className="w-full h-full object-cover"
                 />
@@ -188,7 +192,7 @@ const LoginBox = ({ onSwitch, onBack, onLoginSuccess }) => {
                 <div className="hidden md:block flex-1 relative bg-emerald-950/20">
                     <div className="absolute inset-4 rounded-3xl overflow-hidden border border-white/5 shadow-inner">
                         <img
-                            src="/src/assets/green_pyramid_login.png"
+                            src={sideImage}
                             alt="Decorative Pyramid"
                             className="w-full h-full object-cover"
                         />

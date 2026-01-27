@@ -1,12 +1,11 @@
 name = "synapse-backend"
 main = "server.js"
-compatibility_date = "2024-01-01"
+compatibility_date = "2025-01-01"
+compatibility_flags = [ "nodejs_compat" ]
 
 # Hyperdrive setup for accelerated DB queries
-# Replace with your actual ID after running wrangler hyperdrive create synapse-db --connection-string="..."
-[[hyperdrive]]
-binding = "HYPERDRIVE"
-id = "your-hyperdrive-id"
+# (Optional) To accelerate, run: wrangler hyperdrive create synapse-db --connection-string="..."
+# Then add the [[hyperdrive]] block here with the provided ID.
 
 [vars]
 # DATABASE_URL = "Use secrets for this instead (wrangler secret put DATABASE_URL)"

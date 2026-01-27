@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
 import { Mail, Lock, Target, User, AtSign, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+// Import Assets for Production Build
+import bgImage from '../../assets/dark_floating_pyramids_bg.png';
+import sideImage from '../../assets/green_pyramid_login.png';
 
 const SignUpBox = ({ onSwitch, onBack }) => {
     const [formData, setFormData] = useState({ name: '', username: '', email: '', password: '', confirmPassword: '' });
@@ -15,7 +18,8 @@ const SignUpBox = ({ onSwitch, onBack }) => {
         setStatus({ type: 'loading', message: 'Syncing with Neural Network...' });
 
         try {
-            const response = await fetch('http://localhost:5000/api/register', {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const response = await fetch(`${apiUrl}/api/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -43,7 +47,7 @@ const SignUpBox = ({ onSwitch, onBack }) => {
             {/* Background Floating Elements */}
             <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
                 <img
-                    src="/src/assets/dark_floating_pyramids_bg.png"
+                    src={bgImage}
                     alt="background"
                     className="w-full h-full object-cover"
                 />
@@ -70,7 +74,7 @@ const SignUpBox = ({ onSwitch, onBack }) => {
                 <div className="hidden md:block flex-1 relative bg-emerald-950/20">
                     <div className="absolute inset-4 rounded-3xl overflow-hidden border border-white/5">
                         <img
-                            src="/src/assets/green_pyramid_login.png"
+                            src={sideImage}
                             alt="Decorative Pyramid"
                             className="w-full h-full object-cover"
                         />
