@@ -26,6 +26,12 @@ function App() {
     const [isExited, setIsExited] = useState(false);
     const [otpEmail, setOtpEmail] = useState('');
 
+    // Track view changes for debugging
+    useEffect(() => {
+        console.log('👀 View changed to:', view, 'at', new Date().toISOString());
+        console.trace('View change stack trace');
+    }, [view]);
+
     const LIVE_API = "https://synapse-backend.pralayd140.workers.dev";
 
     useEffect(() => {
@@ -35,7 +41,7 @@ function App() {
             const savedUser = Cookies.get('synapse_session_user');
 
             if (!token) {
-                setIsLoading(false);
+                setTimeout(() => setIsLoading(false), 800);
                 return;
             }
 
@@ -46,6 +52,7 @@ function App() {
             if (savedUser) {
                 try {
                     const userData = JSON.parse(savedUser);
+                    console.log('🎯 Setting user data and view to profile');
                     setUser(userData);
                     setView('profile');
                     userLoggedIn = true;
@@ -99,7 +106,7 @@ function App() {
                 handleLogout();
                 userLoggedIn = false;
             } finally {
-                setIsLoading(false);
+                setTimeout(() => setIsLoading(false), 1200);
             }
         };
 
@@ -127,11 +134,13 @@ function App() {
     };
 
     const handleLogout = async () => {
+        console.log('🚪 LOGOUT TRIGGERED - Stack trace:', new Error().stack);
         try { await fetch(`${LIVE_API}/api/auth/logout`, { method: 'POST' }); } catch (e) { }
         setUser(null);
         // Clear all authentication cookies
         Cookies.remove('synapse_session_token');
         Cookies.remove('synapse_session_user');
+        console.log('🧹 Cookies cleared, setting view to landing');
         setView('landing');
     };
 
