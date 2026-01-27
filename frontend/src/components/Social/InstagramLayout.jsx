@@ -16,15 +16,18 @@ const InstagramLayout = ({ currentUser, onLogout }) => {
         const fetchData = async () => {
             setLoading(true);
             try {
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
                 if (view === 'feed') {
-                    const res = await fetch('http://localhost:5000/api/feed');
+                    const res = await fetch(`${apiUrl}/api/social/feed`);
                     const data = await res.json();
                     setPosts(Array.isArray(data) ? data : []);
                 } else if (view === 'profile') {
-                    const res = await fetch(`http://localhost:5000/api/user/profile/${currentUser.username}`);
+                    const res = await fetch(`${apiUrl}/api/user/profile/${currentUser.username}`);
                     const data = await res.json();
-                    setUserProfile(data);
-                    setPosts(data.posts || []);
+                    // data might be { success: true, data: profile } or just profile
+                    const profileData = data.data || data;
+                    setUserProfile(profileData);
+                    setPosts(profileData.posts || []);
                 }
             } catch (err) {
                 console.error("Data Fetch Error:", err);

@@ -2,13 +2,16 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Target, Shield, Zap, Globe, X } from 'lucide-react';
 
+// Import Assets for Production Build
+import bgImage from '../../assets/dark_floating_pyramids_bg.png';
+
 const LandingPage = ({ onLogin, onRegister, onExit }) => {
     return (
         <div className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 md:p-8 overflow-hidden bg-black text-white">
             {/* Background Image Layer */}
             <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
                 <img
-                    src="/src/assets/dark_floating_pyramids_bg.png"
+                    src={bgImage}
                     alt="background"
                     className="w-full h-full object-cover"
                 />
