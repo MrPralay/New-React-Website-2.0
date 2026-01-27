@@ -39,8 +39,19 @@ function App() {
                 return;
             }
 
+            // If we have cached user data, use it immediately for better UX
+            if (savedUser) {
+                try {
+                    const userData = JSON.parse(savedUser);
+                    setUser(userData);
+                    setView('profile');
+                } catch (e) {
+                    console.error('Failed to parse saved user data:', e);
+                }
+            }
+
             try {
-                // Background Verification
+                // Background Verification (non-blocking)
                 const response = await fetch(`${LIVE_API}/api/auth/me`, {
                     method: 'GET',
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -57,18 +68,16 @@ function App() {
                         sameSite: 'strict'
                     });
                 } else if (response.status === 401 || response.status === 403) {
+                    console.warn('Token invalid, logging out...');
                     // Only log out if the session is explicitly invalid
                     handleLogout();
-                } else if (savedUser) {
-                    // If server is just slow/down, use the last known profile from cookies
-                    setUser(JSON.parse(savedUser));
-                    setView('profile');
+                } else {
+                    console.warn('API call failed but keeping user logged in:', response.status);
+                    // Keep user logged in with cached data
                 }
             } catch (err) {
-                if (savedUser) {
-                    setUser(JSON.parse(savedUser));
-                    setView('profile');
-                }
+                console.error('API call failed, using cached data:', err);
+                // Keep user logged in with cached data - don't log out
             } finally {
                 setTimeout(() => setIsLoading(false), 1200);
             }
