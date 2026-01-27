@@ -1,3 +1,4 @@
+import { Hono } from 'hono';
 import { getProfile, updateProfile } from '../controllers/userController.js';
 import authenticateToken from '../middleware/authMiddleware.js';
 

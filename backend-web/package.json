@@ -2,31 +2,23 @@
     "name": "backend-web",
     "version": "1.0.0",
     "type": "module",
-    "description": "Node.js + Express backend for AI Login System",
+    "description": "SynapseX Neural Core",
     "main": "server.js",
     "scripts": {
-        "start": "node server.js",
         "dev": "wrangler dev",
-        "deploy": "wrangler deploy",
-        "build": "prisma generate"
+        "deploy": "wrangler deploy"
     },
     "dependencies": {
-        "@hono/node-server": "^1.8.0",
         "@neondatabase/serverless": "^0.6.0",
-        "@prisma/adapter-neon": "^5.0.0",
-        "@prisma/client": "^5.0.0",
+        "@prisma/adapter-neon": "^5.22.0",
+        "@prisma/client": "^5.22.0",
         "bcryptjs": "^2.4.3",
-        "cors": "^2.8.5",
-        "dotenv": "^16.3.1",
-        "googleapis": "^170.1.0",
-        "hono": "^4.0.0",
-        "jsonwebtoken": "^9.0.1",
-        "nodemailer": "^7.0.13",
-        "ws": "^8.14.2"
+        "hono": "^4.6.0",
+        "jsonwebtoken": "^9.0.2",
+        "nodemailer": "^6.9.7"
     },
     "devDependencies": {
-        "nodemon": "^3.0.1",
-        "prisma": "^5.0.0",
-        "wrangler": "^4.61.0"
+        "prisma": "^5.22.0",
+        "wrangler": "^3.80.0"
     }
 }
