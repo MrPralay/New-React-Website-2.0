@@ -1,6 +1,5 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { setCookie, deleteCookie } from 'hono/cookie';
 import getPrisma from '../prisma/db.js';
 import { sendOTP, sendResetOTP } from '../utils/email.js';
 

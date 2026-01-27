@@ -36,9 +36,8 @@ function App() {
 
     useEffect(() => {
         const performNeuralSync = async () => {
-            // Restore from Cookies (names unified with backend)
             const token = Cookies.get('synapse_token');
-            const savedUser = Cookies.get('synapse_session_user');
+            const savedUser = localStorage.getItem('synapse_user_data');
 
             // Debug simplified
             console.log('🍪 Session Check:', { hasToken: !!token, hasUser: !!savedUser });
@@ -59,7 +58,6 @@ function App() {
             // SECURE APPROACH: Use cached data but verify with API
             let userLoggedIn = false;
 
-            // If we have cached user data, use it immediately for better UX
             if (savedUser) {
                 try {
                     const userData = JSON.parse(savedUser);
@@ -67,13 +65,12 @@ function App() {
                     setUser(userData);
                     setView('profile');
                     userLoggedIn = true;
-                    console.log('✅ User logged in from cached data - API verification skipped due to JWT_SECRET mismatch');
-                    // Skip API verification since backend has JWT_SECRET mismatch between environments
+                    // Skip API verification temporarily if data exists
                     setTimeout(() => setIsLoading(false), 1200);
                     return;
                 } catch (e) {
                     console.error('Failed to parse saved user data:', e);
-                    Cookies.remove('synapse_session_user');
+                    localStorage.removeItem('synapse_user_data');
                 }
             }
 
@@ -97,12 +94,8 @@ function App() {
                     setUser(data.user);
                     setView('profile');
                     userLoggedIn = true;
-                    // Refresh cookie with new user data
-                    Cookies.set('synapse_session_user', JSON.stringify(data.user), {
-                        expires: 7, // 7 days
-                        secure: true,
-                        sameSite: 'Lax'
-                    });
+                    // Refresh localStorage with new user data
+                    localStorage.setItem('synapse_user_data', JSON.stringify(data.user));
                 } else if (response.status === 401 || response.status === 403) {
                     const errorData = await response.json().catch(() => ({}));
                     console.warn('🚫 Token invalid - Error:', errorData);
@@ -147,21 +140,16 @@ function App() {
         });
         setUser(userData);
         if (token) {
-            // Use the same name as backend to avoid duplicates
-            Cookies.set('synapse_token', token, {
-                expires: 7,
-                secure: true,
-                sameSite: 'Lax' // Match backend standard
-            });
+            Cookies.set('synapse_token', token, { expires: 7, secure: true, sameSite: 'Lax' });
             console.log('🍪 Token cookie synchronized');
         }
-        // Set user data cookie
-        Cookies.set('synapse_session_user', JSON.stringify(userData), {
-            expires: 7, // 7 days
-            secure: true,
-            sameSite: 'Lax'
-        });
-        console.log('🍪 User data cookie set successfully');
+        if (loginData.sessionId) {
+            Cookies.set('session_id', loginData.sessionId, { expires: 7, secure: true, sameSite: 'Lax' });
+            console.log('🍪 Session ID cookie set');
+        }
+        // Set user data in localStorage (The "Nametag")
+        localStorage.setItem('synapse_user_data', JSON.stringify(userData));
+        console.log('📦 User data stored in localStorage');
         setView('profile');
     };
 
@@ -171,8 +159,8 @@ function App() {
         setUser(null);
         // Clear ALL possible session cookies to be safe
         Cookies.remove('synapse_token');
-        Cookies.remove('synapse_session_user');
         Cookies.remove('session_id');
+        localStorage.removeItem('synapse_user_data');
 
         localStorage.removeItem('synapse_last_view');
         localStorage.removeItem('synapse_social_tab');
