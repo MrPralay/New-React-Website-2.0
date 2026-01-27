@@ -36,17 +36,12 @@ function App() {
 
     useEffect(() => {
         const performNeuralSync = async () => {
-            // Restore from Cookies (survives refreshes and browser sessions)
-            const token = Cookies.get('synapse_session_token');
+            // Restore from Cookies (names unified with backend)
+            const token = Cookies.get('synapse_token');
             const savedUser = Cookies.get('synapse_session_user');
 
-            // Debug all cookies
-            console.log('🍪 All Cookies Debug:', {
-                allCookies: document.cookie,
-                synapseToken: token,
-                synapseUser: savedUser,
-                cookiesObject: Cookies.get()
-            });
+            // Debug simplified
+            console.log('🍪 Session Check:', { hasToken: !!token, hasUser: !!savedUser });
 
             console.log('🔍 Token Debug:', {
                 hasToken: !!token,
@@ -152,13 +147,13 @@ function App() {
         });
         setUser(userData);
         if (token) {
-            // Set secure authentication token cookie
-            Cookies.set('synapse_session_token', token, {
-                expires: 7, // 7 days
+            // Use the same name as backend to avoid duplicates
+            Cookies.set('synapse_token', token, {
+                expires: 7,
                 secure: true,
-                sameSite: 'strict'
+                sameSite: 'Lax' // Match backend standard
             });
-            console.log('🍪 Token cookie set successfully');
+            console.log('🍪 Token cookie synchronized');
         }
         // Set user data cookie
         Cookies.set('synapse_session_user', JSON.stringify(userData), {
@@ -174,9 +169,12 @@ function App() {
         console.log('🚪 LOGOUT TRIGGERED - Stack trace:', new Error().stack);
         try { await fetch(`${LIVE_API}/api/auth/logout`, { method: 'POST' }); } catch (e) { }
         setUser(null);
-        // Clear all persistent states
+        // Clear ALL possible session cookies to be safe
+        Cookies.remove('synapse_token');
         Cookies.remove('synapse_session_token');
         Cookies.remove('synapse_session_user');
+        Cookies.remove('session_id');
+
         localStorage.removeItem('synapse_last_view');
         localStorage.removeItem('synapse_social_tab');
 
