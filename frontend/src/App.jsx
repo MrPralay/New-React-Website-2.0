@@ -69,11 +69,16 @@ function App() {
                     setUser(data.user);
                     setView('profile');
                     localStorage.setItem('synapse_user', JSON.stringify(data.user));
-                } else {
-                    // Only boot if the session is truly dead on the server
+                } else if (response.status === 401 || response.status === 403) {
+                    // Only log out if the session is explicitly invalid/expired
                     localStorage.removeItem('synapse_user');
                     localStorage.removeItem('synapse_token');
                     setView('landing');
+                } else {
+                    // If it's a 404 (not deployed yet) or server error, use the backup data
+                    console.warn("Neural sync bypassed: Switching to persistent local mode.");
+                    setUser(JSON.parse(storedUser));
+                    setView('profile');
                 }
             } catch (error) {
                 // If offline, keep the last known user
