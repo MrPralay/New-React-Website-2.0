@@ -39,7 +39,7 @@ export const register = async (c) => {
         return c.json({
             success: false,
             error: "Neural Connection Error",
-            message: error.message
+            details: c.env.NODE_ENV === 'development' ? error.message : undefined
         }, 500);
     }
 };
