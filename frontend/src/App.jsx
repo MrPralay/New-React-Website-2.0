@@ -14,113 +14,73 @@ const SynapseLogo = ({ size = 60 }) => (
         animate={{ opacity: 1, scale: 1 }}
         className="relative flex items-center justify-center"
     >
-        <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-0 border-2 border-emerald-500/20 rotate-45 rounded-sm"
-        />
-        <motion.div
-            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.8, 0.3], rotate: 45 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="w-1/2 h-1/2 bg-emerald-500 shadow-[0_0_20px_#10b981] rounded-sm"
-        />
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} className="absolute inset-0 border-2 border-emerald-500/20 rotate-45 rounded-sm" />
+        <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.8, 0.3], rotate: 45 }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} className="w-1/2 h-1/2 bg-emerald-500 shadow-[0_0_20px_#10b981] rounded-sm" />
         {[0, 1, 2, 3].map((i) => (
-            <motion.div
-                key={i}
-                animate={{ y: [-10, 10, -10], x: i % 2 === 0 ? [-5, 5, -5] : [5, -5, 5], opacity: [0, 1, 0] }}
-                transition={{ duration: 3, delay: i * 0.5, repeat: Infinity }}
-                className="absolute w-1 h-1 bg-emerald-400 rounded-full"
-                style={{ top: i < 2 ? '0%' : '100%', left: i % 2 === 0 ? '0%' : '100%' }}
-            />
+            <motion.div key={i} animate={{ y: [-10, 10, -10], x: i % 2 === 0 ? [-5, 5, -5] : [5, -5, 5], opacity: [0, 1, 0] }} transition={{ duration: 3, delay: i * 0.5, repeat: Infinity }} className="absolute w-1 h-1 bg-emerald-400 rounded-full" style={{ top: i < 2 ? '0%' : '100%', left: i % 2 === 0 ? '0%' : '100%' }} />
         ))}
     </motion.div>
 );
 
 function App() {
-    const [view, setView] = useState('landing');
+    // START BLANK: No local storage usage
     const [user, setUser] = useState(null);
+    const [view, setView] = useState('landing');
     const [isLoading, setIsLoading] = useState(true);
     const [otpEmail, setOtpEmail] = useState('');
     const [isExited, setIsExited] = useState(false);
     const [isShuttingDown, setIsShuttingDown] = useState(false);
 
     useEffect(() => {
-        const checkSession = async () => {
-            const storedUser = localStorage.getItem('synapse_user');
-            const token = localStorage.getItem('synapse_token'); // Get backup token
-
-            if (!storedUser) {
-                setTimeout(() => setIsLoading(false), 1200);
-                return;
-            }
+        const verifyNeuralSession = async () => {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
             try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+                // Perform a direct link check via Cookies (credentials: include)
                 const response = await fetch(`${apiUrl}/api/auth/me`, {
                     method: 'GET',
-                    credentials: 'include',
-                    headers: {
-                        'Authorization': `Bearer ${token}` // Send backup identity header
-                    }
+                    credentials: 'include'
                 });
 
                 if (response.ok) {
                     const data = await response.json();
                     setUser(data.user);
                     setView('profile');
-                    localStorage.setItem('synapse_user', JSON.stringify(data.user));
-                } else if (response.status === 401 || response.status === 403) {
-                    // Only log out if the session is explicitly invalid/expired
-                    localStorage.removeItem('synapse_user');
-                    localStorage.removeItem('synapse_token');
-                    setView('landing');
+                    console.log("Neural link restored via secure cookies.");
                 } else {
-                    // If it's a 404 (not deployed yet) or server error, use the backup data
-                    console.warn("Neural sync bypassed: Switching to persistent local mode.");
-                    setUser(JSON.parse(storedUser));
-                    setView('profile');
+                    setView('landing');
                 }
             } catch (error) {
-                // If offline, keep the last known user
-                console.warn("Neural Core Offline - Mode: Local Persistence");
-                setUser(JSON.parse(storedUser));
-                setView('profile');
+                console.warn("Neural sync failed. Network connectivity required.");
+                setView('landing');
             } finally {
-                setTimeout(() => setIsLoading(false), 1500);
+                // Artificial delay for the premium synapse animation
+                setTimeout(() => setIsLoading(false), 1200);
             }
         };
 
-        checkSession();
+        verifyNeuralSession();
     }, []);
 
     const handleLoginSuccess = (loginData) => {
-        const { user: userData, token } = loginData;
+        const { user: userData } = loginData;
         setUser(userData);
-        localStorage.setItem('synapse_user', JSON.stringify(userData));
-        if (token) localStorage.setItem('synapse_token', token);
+        // NO localStorage.setItem here!
         setView('profile');
     };
 
     const handleLogout = async () => {
         try {
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-            await fetch(`${apiUrl}/api/auth/logout`, {
-                method: 'POST',
-                credentials: 'include'
-            });
-        } catch (error) { console.error("Neural logout failed:", error); }
+            await fetch(`${apiUrl}/api/auth/logout`, { method: 'POST', credentials: 'include' });
+        } catch (error) { }
 
         setUser(null);
-        localStorage.removeItem('synapse_user');
-        localStorage.removeItem('synapse_token');
+        // NO localStorage.removeItem here!
         setView('landing');
     };
 
-    const pageVariants = {
-        initial: { opacity: 0, x: 20 },
-        animate: { opacity: 1, x: 0 },
-        exit: { opacity: 0, x: -20 }
-    };
+    const pageVariants = { initial: { opacity: 0, x: 20 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -20 } };
 
     if (isLoading) {
         return (
@@ -137,48 +97,27 @@ function App() {
 
     if (isExited) {
         return (
-            <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
-                    <SynapseLogo size={40} />
-                    <h1 className="text-2xl font-bold tracking-tighter text-white mb-2 italic mt-8">Connection Severed</h1>
-                    <button onClick={() => setIsExited(false)} className="mt-16 text-[9px] text-gray-700 hover:text-emerald-500/50 uppercase tracking-[0.3em] font-bold transition-colors">
-                        [ Re-initialize Link ]
-                    </button>
-                </motion.div>
+            <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 text-center">
+                <SynapseLogo size={40} />
+                <h1 className="text-2xl font-bold tracking-tighter text-white mb-2 italic mt-8">Connection Severed</h1>
+                <button onClick={() => setIsExited(false)} className="mt-16 text-[9px] text-gray-700 hover:text-emerald-500/50 uppercase tracking-[0.3em] font-bold transition-colors">
+                    [ Re-initialize Link ]
+                </button>
             </div>
         );
     }
 
     return (
-        <motion.div
-            className="App bg-black min-h-screen"
-            animate={isShuttingDown ? { scaleY: 0.001, opacity: 0, transition: { duration: 0.8, ease: "easeInOut" } } : { scaleY: 1, opacity: 1 }}
-            onAnimationComplete={() => {
-                if (isShuttingDown) {
-                    setIsExited(true);
-                    setIsShuttingDown(false);
-                    try { window.close(); } catch (e) { }
-                }
-            }}
-        >
+        <motion.div className="App bg-black min-h-screen" animate={isShuttingDown ? { scaleY: 0.001, opacity: 0, transition: { duration: 0.8, ease: "easeInOut" } } : { scaleY: 1, opacity: 1 }}>
             <AnimatePresence mode="wait">
                 {view === 'landing' && (
                     <motion.div key="landing" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.5 }}>
-                        <LandingPage
-                            onLogin={() => setView('login')}
-                            onRegister={() => setView('signup')}
-                            onExit={() => setIsShuttingDown(true)}
-                        />
+                        <LandingPage onLogin={() => setView('login')} onRegister={() => setView('signup')} onExit={() => setIsShuttingDown(true)} />
                     </motion.div>
                 )}
                 {view === 'login' && (
                     <motion.div key="login" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.4 }}>
-                        <LoginBox
-                            onSwitch={() => setView('signup')}
-                            onBack={() => setView('landing')}
-                            onLoginSuccess={handleLoginSuccess}
-                            onForgot={() => setView('forgot')}
-                        />
+                        <LoginBox onSwitch={() => setView('signup')} onBack={() => setView('landing')} onLoginSuccess={handleLoginSuccess} onForgot={() => setView('forgot')} />
                     </motion.div>
                 )}
                 {view === 'forgot' && (
