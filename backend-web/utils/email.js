@@ -4,43 +4,53 @@ import { google } from 'googleapis';
 const OAuth2 = google.auth.OAuth2;
 
 const createTransporter = async (env) => {
-    const oauth2Client = new OAuth2(
-        env.GMAIL_CLIENT_ID,
-        env.GMAIL_CLIENT_SECRET,
-        "https://developers.google.com/oauthplayground"
-    );
+    try {
+        const oauth2Client = new OAuth2(
+            env.GMAIL_CLIENT_ID,
+            env.GMAIL_CLIENT_SECRET,
+            "https://developers.google.com/oauthplayground"
+        );
 
-    oauth2Client.setCredentials({
-        refresh_token: env.GMAIL_REFRESH_TOKEN
-    });
-
-    const accessToken = await new Promise((resolve, reject) => {
-        oauth2Client.getAccessToken((err, token) => {
-            if (err) {
-                console.error("Failed to create access token :(", err);
-                reject("Failed to create access token :(");
-            }
-            resolve(token);
+        oauth2Client.setCredentials({
+            refresh_token: env.GMAIL_REFRESH_TOKEN
         });
-    });
 
-    const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-            type: "OAuth2",
-            user: env.EMAIL_USER,
-            accessToken,
-            clientId: env.GMAIL_CLIENT_ID,
-            clientSecret: env.GMAIL_CLIENT_SECRET,
-            refreshToken: env.GMAIL_REFRESH_TOKEN
-        }
-    });
+        const accessToken = await new Promise((resolve, reject) => {
+            oauth2Client.getAccessToken((err, token) => {
+                if (err) {
+                    console.error("OAuth2 Access Token Error:", err);
+                    reject("Failed to create access token");
+                }
+                resolve(token);
+            });
+        });
 
-    return transporter;
+        const transporter = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 465,
+            secure: true,
+            auth: {
+                type: "OAuth2",
+                user: env.EMAIL_USER,
+                accessToken,
+                clientId: env.GMAIL_CLIENT_ID,
+                clientSecret: env.GMAIL_CLIENT_SECRET,
+                refreshToken: env.GMAIL_REFRESH_TOKEN
+            }
+        });
+
+        return transporter;
+    } catch (err) {
+        console.error("Transporter Creation Error:", err);
+        throw err;
+    }
 };
 
 export const sendOTP = async (email, otp, env) => {
     try {
+        console.log(`Attempting to send OTP to ${email}...`);
+        const transporter = await createTransporter(env);
+
         const mailOptions = {
             from: `"SynapseX Neural Core" <${env.EMAIL_USER}>`,
             to: email,
@@ -58,11 +68,11 @@ export const sendOTP = async (email, otp, env) => {
             `
         };
 
-        const transporter = await createTransporter(env);
-        await transporter.sendMail(mailOptions);
+        const info = await transporter.sendMail(mailOptions);
+        console.log("Email Transmitted:", info.messageId);
         return true;
     } catch (error) {
-        console.error("Email Error:", error);
+        console.error("Email Transmission Critical Failure:", error);
         return false;
     }
 };

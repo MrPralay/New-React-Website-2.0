@@ -8,14 +8,12 @@ export const register = async (c) => {
         const { name, username, email, password } = await c.req.json();
         const prisma = getPrisma(c.env.DATABASE_URL);
 
-        // Validation
         if (!email || !password || !username) {
             return c.json({ success: false, error: "Missing required fields" }, 400);
         }
 
-        // Generate 4-digit OTP
         const otp = Math.floor(1000 + Math.random() * 9000).toString();
-        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -32,7 +30,6 @@ export const register = async (c) => {
             }
         });
 
-        // Send OTP via email
         const emailSent = await sendOTP(email, otp, c.env);
 
         return c.json({
@@ -43,16 +40,7 @@ export const register = async (c) => {
         }, 201);
     } catch (error) {
         console.error("Registration Error:", error);
-
-        if (error.code === 'P2002') {
-            return c.json({ success: false, error: "Username or Email already synced to the network" }, 409);
-        }
-
-        return c.json({
-            success: false,
-            error: "Neural Connection Error",
-            details: c.env.NODE_ENV === 'development' ? error.message : undefined
-        }, 500);
+        return c.json({ success: false, error: "Neural link failure", details: error.message }, 500);
     }
 };
 
@@ -63,17 +51,9 @@ export const verifyOTP = async (c) => {
 
         const user = await prisma.user.findUnique({ where: { email } });
 
-        if (!user) {
-            return c.json({ success: false, error: "Neural record not found" }, 404);
-        }
-
-        if (user.otp !== otp) {
-            return c.json({ success: false, error: "Invalid neural access code" }, 400);
-        }
-
-        if (new Date() > user.otpExpires) {
-            return c.json({ success: false, error: "Neural code expired" }, 400);
-        }
+        if (!user) return c.json({ success: false, error: "Neural record not found" }, 404);
+        if (user.otp !== otp) return c.json({ success: false, error: "Invalid neural access code" }, 400);
+        if (new Date() > user.otpExpires) return c.json({ success: false, error: "Neural code expired" }, 400);
 
         await prisma.user.update({
             where: { id: user.id },
@@ -84,13 +64,10 @@ export const verifyOTP = async (c) => {
             }
         });
 
-        return c.json({
-            success: true,
-            message: "Neural link established successfully"
-        });
+        return c.json({ success: true, message: "Neural link established successfully" });
     } catch (error) {
         console.error("OTP Verification Error:", error);
-        return c.json({ success: false, error: "Verification process failed" }, 500);
+        return c.json({ success: false, error: "Verification process failed", details: error.message }, 500);
     }
 };
 
@@ -104,13 +81,22 @@ export const login = async (c) => {
         }
 
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user || !(await bcrypt.compare(password, user.password))) {
+        if (!user) {
             return c.json({ success: false, error: "Access Denied: Neural mismatch" }, 401);
         }
 
-        if (!user.isVerified) {
-            // Optional: Re-send OTP if not verified? 
-            // For now just block.
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return c.json({ success: false, error: "Access Denied: Neural mismatch" }, 401);
+        }
+
+        // AUTO-VERIFY EXISTING USERS (FIX FOR OLD ACCOUNTS)
+        if (user.isVerified === false && !user.otp) {
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { isVerified: true }
+            });
+        } else if (!user.isVerified) {
             return c.json({ success: false, error: "Neural link not verified. Please check your email." }, 403);
         }
 
@@ -134,7 +120,7 @@ export const login = async (c) => {
                     riskScore = aiData.risk_score;
                 }
             } catch (aiError) {
-                console.warn("AI Neural Core unreachable, using baseline heuristics.");
+                console.warn("AI Neural Core unreachable");
             }
         }
 
@@ -145,7 +131,7 @@ export const login = async (c) => {
 
         const token = jwt.sign(
             { userId: user.id, username: user.username, role: user.role },
-            c.env.JWT_SECRET || 'fallback_secret_change_me',
+            c.env.JWT_SECRET || 'fallback_secret',
             { expiresIn: '2h' }
         );
 
@@ -155,15 +141,15 @@ export const login = async (c) => {
             user: {
                 id: user.id,
                 username: user.username,
-                name: user.name,
-                riskScore,
                 role: user.role,
+                name: user.name,
                 image: user.profileImage,
-                bio: user.bio
+                bio: user.bio,
+                riskScore
             }
         });
     } catch (error) {
         console.error("Login Error:", error);
-        return c.json({ success: false, error: "Neural link failure" }, 500);
+        return c.json({ success: false, error: "Neural link failure", details: error.message }, 500);
     }
 };
