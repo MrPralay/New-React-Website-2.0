@@ -283,3 +283,41 @@ export const logout = async (c) => {
         return c.json({ success: false, error: "Failed to sever link" }, 500);
     }
 };
+
+export const getMe = async (c) => {
+    try {
+        const prisma = getPrisma(c.env.DATABASE_URL);
+
+        // 1. Get token from Cookies OR Authorization Header (for flexibility)
+        const cookieToken = c.req.cookie('synapse_token');
+        const authHeader = c.req.header('Authorization');
+        const token = cookieToken || (authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null);
+
+        if (!token) return c.json({ success: false, error: "No neural link found" }, 401);
+
+        // 2. Verify Token
+        const decoded = jwt.verify(token, c.env.JWT_SECRET || 'fallback_secret');
+
+        // 3. Get User
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.userId }
+        });
+
+        if (!user) return c.json({ success: false, error: "Identity corrupted" }, 404);
+
+        return c.json({
+            success: true,
+            user: {
+                id: user.id,
+                username: user.username,
+                role: user.role,
+                name: user.name,
+                image: user.profileImage,
+                bio: user.bio,
+                riskScore: user.riskScore
+            }
+        });
+    } catch (error) {
+        return c.json({ success: false, error: "Session expired" }, 401);
+    }
+};

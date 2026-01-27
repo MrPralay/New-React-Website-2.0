@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { register, login, verifyOTP, forgotPassword, resetPassword, logout } from '../controllers/authController.js';
+import { register, login, verifyOTP, forgotPassword, resetPassword, logout, getMe } from '../controllers/authController.js';
 
 const auth = new Hono();
 
@@ -9,5 +9,6 @@ auth.post('/verify-otp', verifyOTP);
 auth.post('/forgot-password', forgotPassword);
 auth.post('/reset-password', resetPassword);
 auth.post('/logout', logout);
+auth.get('/me', getMe);
 
 export default auth;
