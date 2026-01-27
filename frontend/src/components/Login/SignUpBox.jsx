@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { Mail, Lock, Target, User, AtSign, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 

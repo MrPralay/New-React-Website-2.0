@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useRef } from 'react';
 import { Mail, Lock, Target, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 
