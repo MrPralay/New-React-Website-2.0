@@ -40,6 +40,14 @@ function App() {
             const token = Cookies.get('synapse_session_token');
             const savedUser = Cookies.get('synapse_session_user');
             
+            // Debug all cookies
+            console.log('🍪 All Cookies Debug:', {
+                allCookies: document.cookie,
+                synapseToken: token,
+                synapseUser: savedUser,
+                cookiesObject: Cookies.get()
+            });
+            
             console.log('🔍 Token Debug:', {
                 hasToken: !!token,
                 tokenLength: token ? token.length : 0,
