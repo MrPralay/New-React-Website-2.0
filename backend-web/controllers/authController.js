@@ -40,6 +40,15 @@ export const register = async (c) => {
         }, 201);
     } catch (error) {
         console.error("Registration Error:", error);
+
+        // Handle duplicate email/username
+        if (error.code === 'P2002') {
+            return c.json({
+                success: false,
+                error: "Identity overlap detected: This email or username is already synced to the network."
+            }, 409);
+        }
+
         return c.json({ success: false, error: `Neural link failure: ${error.message}` }, 500);
     }
 };
