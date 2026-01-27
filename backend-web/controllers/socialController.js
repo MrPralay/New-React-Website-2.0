@@ -1,7 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
-const getFeed = async (req, res) => {
+export const getFeed = async (c) => {
     try {
         const posts = await prisma.post.findMany({
             take: 20,
@@ -15,20 +15,27 @@ const getFeed = async (req, res) => {
                 }
             }
         });
-        res.json(posts);
+        return c.json(posts);
     } catch (error) {
-        res.status(500).json({ error: "Feed generation failure" });
+        console.error("Feed Error:", error);
+        return c.json({ success: false, error: "Feed generation failure" }, 500);
     }
 };
 
-const createPost = async (req, res) => {
-    const { caption, imageUrl } = req.body;
+export const createPost = async (c) => {
     try {
+        const { caption, imageUrl } = await c.req.json();
+        const user = c.get('user');
+
+        if (!imageUrl) {
+            return c.json({ success: false, error: "Image URL is required" }, 400);
+        }
+
         const post = await prisma.post.create({
             data: {
                 caption,
                 imageUrl,
-                userId: req.user.userId
+                userId: user.userId
             },
             include: {
                 user: {
@@ -36,10 +43,9 @@ const createPost = async (req, res) => {
                 }
             }
         });
-        res.status(201).json(post);
+        return c.json({ success: true, data: post }, 201);
     } catch (error) {
-        res.status(500).json({ error: "Post synchronization failed" });
+        console.error("Post Creation Error:", error);
+        return c.json({ success: false, error: "Post synchronization failed" }, 500);
     }
 };
-
-module.exports = { getFeed, createPost };

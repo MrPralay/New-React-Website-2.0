@@ -1,8 +1,8 @@
-const express = require('express');
-const { getProfile } = require('../controllers/userController');
+import { Hono } from 'hono';
+import { getProfile } from '../controllers/userController.js';
 
-const router = express.Router();
+const user = new Hono();
 
-router.get('/profile/:username', getProfile);
+user.get('/profile/:username', getProfile);
 
-module.exports = router;
+export default user;

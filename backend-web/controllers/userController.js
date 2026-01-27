@@ -1,8 +1,8 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
-const getProfile = async (req, res) => {
-    const { username } = req.params;
+export const getProfile = async (c) => {
+    const username = c.req.param('username');
     try {
         const user = await prisma.user.findUnique({
             where: { username },
@@ -32,11 +32,12 @@ const getProfile = async (req, res) => {
                 }
             }
         });
-        if (!user) return res.status(404).json({ error: "Identity not found" });
-        res.json(user);
+        if (!user) {
+            return c.json({ success: false, error: "Identity not found" }, 404);
+        }
+        return c.json({ success: true, data: user });
     } catch (error) {
-        res.status(500).json({ error: "Search failed" });
+        console.error("Profile Error:", error);
+        return c.json({ success: false, error: "Search failed" }, 500);
     }
 };
-
-module.exports = { getProfile };

@@ -1,10 +1,10 @@
-const express = require('express');
-const { getFeed, createPost } = require('../controllers/socialController');
-const authenticateToken = require('../middleware/authMiddleware');
+import { Hono } from 'hono';
+import { getFeed, createPost } from '../controllers/socialController.js';
+import authenticateToken from '../middleware/authMiddleware.js';
 
-const router = express.Router();
+const social = new Hono();
 
-router.get('/feed', getFeed);
-router.post('/posts', authenticateToken, createPost);
+social.get('/feed', getFeed);
+social.post('/posts', authenticateToken, createPost);
 
-module.exports = router;
+export default social;

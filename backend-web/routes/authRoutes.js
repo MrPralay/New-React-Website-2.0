@@ -1,9 +1,9 @@
-const express = require('express');
-const { register, login } = require('../controllers/authController');
+import { Hono } from 'hono';
+import { register, login } from '../controllers/authController.js';
 
-const router = express.Router();
+const auth = new Hono();
 
-router.post('/register', register);
-router.post('/login', login);
+auth.post('/register', register);
+auth.post('/login', login);
 
-module.exports = router;
+export default auth;

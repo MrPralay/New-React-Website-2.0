@@ -1,9 +1,9 @@
-const express = require('express');
-const { getAllUsers } = require('../controllers/adminController');
-const authenticateToken = require('../middleware/authMiddleware');
+import { Hono } from 'hono';
+import { getAllUsers } from '../controllers/adminController.js';
+import authenticateToken from '../middleware/authMiddleware.js';
 
-const router = express.Router();
+const admin = new Hono();
 
-router.get('/users', authenticateToken, getAllUsers);
+admin.get('/users', authenticateToken, getAllUsers);
 
-module.exports = router;
+export default admin;

@@ -1,8 +1,12 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
-const getAllUsers = async (req, res) => {
-    if (req.user.role !== 'ADMIN') return res.status(403).json({ error: "Unauthorized access detected" });
+export const getAllUsers = async (c) => {
+    const user = c.get('user');
+
+    if (user.role !== 'ADMIN') {
+        return c.json({ success: false, error: "Unauthorized access detected" }, 403);
+    }
 
     try {
         const users = await prisma.user.findMany({
@@ -17,10 +21,9 @@ const getAllUsers = async (req, res) => {
             },
             orderBy: { createdAt: 'desc' }
         });
-        res.json(users);
+        return c.json({ success: true, data: users });
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch grid data" });
+        console.error("Admin Error:", error);
+        return c.json({ success: false, error: "Failed to fetch grid data" }, 500);
     }
 };
-
-module.exports = { getAllUsers };

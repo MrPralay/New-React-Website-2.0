@@ -1,13 +1,20 @@
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 
-const register = async (req, res) => {
-    const { name, username, email, password } = req.body;
+export const register = async (c) => {
     try {
+        const { name, username, email, password } = await c.req.json();
+
+        // Validation
+        if (!email || !password || !username) {
+            return c.json({ success: false, error: "Missing required fields" }, 400);
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
+
         const user = await prisma.user.create({
             data: {
                 name,
@@ -17,40 +24,62 @@ const register = async (req, res) => {
                 role: email.includes('admin') ? 'ADMIN' : 'USER'
             }
         });
-        res.status(201).json({ message: "Neural fingerprint created", userId: user.id });
+
+        return c.json({
+            success: true,
+            message: "Neural fingerprint created successfully",
+            userId: user.id
+        }, 210); // Futuristic status or just 201
     } catch (error) {
         console.error("Registration Error:", error);
+
         if (error.code === 'P2002') {
-            res.status(400).json({ error: "Username or Email already synced to the network" });
-        } else {
-            res.status(500).json({ error: `Neural Connection Error: ${error.message || 'Check database status'}` });
+            return c.json({ success: false, error: "Username or Email already synced to the network" }, 409);
         }
+
+        return c.json({
+            success: false,
+            error: "Neural Connection Error",
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        }, 500);
     }
 };
 
-const login = async (req, res) => {
-    const { email, password, behaviorData } = req.body;
+export const login = async (c) => {
     try {
+        const { email, password, behaviorData } = await c.req.json();
+
+        if (!email || !password) {
+            return c.json({ success: false, error: "Credentials required" }, 400);
+        }
+
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user || !(await bcrypt.compare(password, user.password))) {
-            return res.status(401).json({ error: "Access Denied: Neural mismatch" });
+            return c.json({ success: false, error: "Access Denied: Neural mismatch" }, 401);
         }
 
         let riskScore = 0.0;
-        try {
-            const aiResponse = await fetch(`${process.env.AI_BACKEND_URL}/analyze-risk`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email,
-                    key_strokes: behaviorData?.key_strokes || [],
-                    mouse_movements: behaviorData?.mouse_movements || []
-                })
-            });
-            const aiData = await aiResponse.json();
-            riskScore = aiData.risk_score;
-        } catch (aiError) {
-            console.warn("AI Neural Core unreachable, using baseline heuristics.");
+        const aiBackendUrl = process.env.AI_BACKEND_URL;
+
+        if (aiBackendUrl) {
+            try {
+                const aiResponse = await fetch(`${aiBackendUrl}/analyze-risk`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email,
+                        key_strokes: behaviorData?.key_strokes || [],
+                        mouse_movements: behaviorData?.mouse_movements || []
+                    })
+                });
+
+                if (aiResponse.ok) {
+                    const aiData = await aiResponse.json();
+                    riskScore = aiData.risk_score;
+                }
+            } catch (aiError) {
+                console.warn("AI Neural Core unreachable, using baseline heuristics.");
+            }
         }
 
         await prisma.user.update({
@@ -60,11 +89,12 @@ const login = async (req, res) => {
 
         const token = jwt.sign(
             { userId: user.id, username: user.username, role: user.role },
-            process.env.JWT_SECRET || 'secret',
+            process.env.JWT_SECRET || 'fallback_secret_change_me',
             { expiresIn: '2h' }
         );
 
-        res.json({
+        return c.json({
+            success: true,
             token,
             user: {
                 id: user.id,
@@ -77,9 +107,7 @@ const login = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Neural link failure" });
+        console.error("Login Error:", error);
+        return c.json({ success: false, error: "Neural link failure" }, 500);
     }
 };
-
-module.exports = { register, login };

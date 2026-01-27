@@ -1,34 +1,64 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { logger } from 'hono/logger';
+import { secureHeaders } from 'hono/secure-headers';
+import { prettyJSON } from 'hono/pretty-json';
 
-// Load environment variables
-dotenv.config();
+// Import Routes
+import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import socialRoutes from './routes/socialRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
-// Documentation imports
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const socialRoutes = require('./routes/socialRoutes');
-const adminRoutes = require('./routes/adminRoutes');
+const app = new Hono();
 
-const app = express();
-const PORT = process.env.PORT || 5000;
+// Global Middleware
+app.use('*', logger());
+app.use('*', prettyJSON());
+app.use('*', secureHeaders());
+app.use('*', cors({
+    origin: '*', // In production, replace with your frontend URL
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'Authorization'],
+    exposeHeaders: ['Content-Length'],
+    maxAge: 600,
+    credentials: true,
+}));
 
-// Configuration
-app.use(cors());
-app.use(express.json());
+// Professional Error Handling
+app.onError((err, c) => {
+    console.error(`[Error]: ${err.message}`);
+    const status = err.status || 500;
+    return c.json({
+        success: false,
+        error: {
+            message: err.message || 'Internal Server Error',
+            code: err.code || 'INTERNAL_ERROR',
+            ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
+        }
+    }, status);
+});
+
+// 404 Not Found
+app.notFound((c) => {
+    return c.json({
+        success: false,
+        error: {
+            message: 'Resource not found',
+            code: 'NOT_FOUND'
+        }
+    }, 404);
+});
 
 // Main Route
-app.get('/', (req, res) => {
-    res.send('SynapseX Neural Gateway is Online...');
+app.get('/', (c) => {
+    return c.text('SynapseX Neural Gateway is Online...');
 });
 
 // API Routes
-app.use('/api', authRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api', socialRoutes);
-app.use('/api/admin', adminRoutes);
+app.route('/api/auth', authRoutes);
+app.route('/api/user', userRoutes);
+app.route('/api/social', socialRoutes);
+app.route('/api/admin', adminRoutes);
 
-app.listen(PORT, () => {
-    console.log(`Neural Gateway active on port ${PORT}`);
-});
+export default app;
