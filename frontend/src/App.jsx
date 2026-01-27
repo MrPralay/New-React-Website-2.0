@@ -23,7 +23,6 @@ const SynapseLogo = ({ size = 60 }) => (
 );
 
 function App() {
-    // START BLANK: No local storage usage
     const [user, setUser] = useState(null);
     const [view, setView] = useState('landing');
     const [isLoading, setIsLoading] = useState(true);
@@ -31,13 +30,14 @@ function App() {
     const [isExited, setIsExited] = useState(false);
     const [isShuttingDown, setIsShuttingDown] = useState(false);
 
+    // THE LIVE BACKEND GATEWAY
+    const LIVE_API = "https://synapse-backend.pralayd140.workers.dev";
+
     useEffect(() => {
         const verifyNeuralSession = async () => {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
             try {
-                // Perform a direct link check via Cookies (credentials: include)
-                const response = await fetch(`${apiUrl}/api/auth/me`, {
+                // Perform a direct link check via Secure Cookies
+                const response = await fetch(`${LIVE_API}/api/auth/me`, {
                     method: 'GET',
                     credentials: 'include'
                 });
@@ -51,11 +51,10 @@ function App() {
                     setView('landing');
                 }
             } catch (error) {
-                console.warn("Neural sync failed. Network connectivity required.");
+                console.warn("Neural sync failed. Network connectivity or session expired.");
                 setView('landing');
             } finally {
-                // Artificial delay for the premium synapse animation
-                setTimeout(() => setIsLoading(false), 1200);
+                setTimeout(() => setIsLoading(false), 1500);
             }
         };
 
@@ -65,18 +64,18 @@ function App() {
     const handleLoginSuccess = (loginData) => {
         const { user: userData } = loginData;
         setUser(userData);
-        // NO localStorage.setItem here!
         setView('profile');
     };
 
     const handleLogout = async () => {
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-            await fetch(`${apiUrl}/api/auth/logout`, { method: 'POST', credentials: 'include' });
+            await fetch(`${LIVE_API}/api/auth/logout`, {
+                method: 'POST',
+                credentials: 'include'
+            });
         } catch (error) { }
 
         setUser(null);
-        // NO localStorage.removeItem here!
         setView('landing');
     };
 
