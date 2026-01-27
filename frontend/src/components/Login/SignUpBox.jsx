@@ -23,6 +23,7 @@ const SignUpBox = ({ onSwitch, onBack, onSuccess }) => {
             const response = await fetch(`${apiUrl}/api/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     name: formData.name,
                     username: formData.username,

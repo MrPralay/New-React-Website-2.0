@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { setCookie } from 'hono/cookie';
 import getPrisma from '../prisma/db.js';
 import { sendOTP, sendResetOTP } from '../utils/email.js';
 
@@ -156,6 +157,23 @@ export const login = async (c) => {
                 ipAddress,
                 expiresAt: sessionExpires
             }
+        });
+
+        // SET PROFESSIONAL COOKIES (Visible in DevTools -> Application -> Cookies)
+        setCookie(c, 'session_id', session.id, {
+            path: '/',
+            secure: true,
+            httpOnly: true,
+            maxAge: 7200,
+            sameSite: 'None',
+        });
+
+        setCookie(c, 'synapse_token', token, {
+            path: '/',
+            secure: true,
+            httpOnly: true,
+            maxAge: 7200,
+            sameSite: 'None',
         });
 
         return c.json({

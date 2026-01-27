@@ -17,7 +17,7 @@ app.use('*', logger());
 app.use('*', prettyJSON());
 app.use('*', secureHeaders());
 app.use('*', cors({
-    origin: '*', // In production, replace with your frontend URL
+    origin: (origin) => origin, // Dynamically allow the requesting origin to support cookies
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
     exposeHeaders: ['Content-Length'],

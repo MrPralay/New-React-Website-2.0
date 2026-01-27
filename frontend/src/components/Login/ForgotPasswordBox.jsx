@@ -24,6 +24,7 @@ const ForgotPasswordBox = ({ onBack, onSuccess }) => {
             const response = await fetch(`${apiUrl}/api/auth/forgot-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ email })
             });
 
@@ -70,6 +71,7 @@ const ForgotPasswordBox = ({ onBack, onSuccess }) => {
             const response = await fetch(`${apiUrl}/api/auth/reset-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     email,
                     otp: otp.join(''),
@@ -134,8 +136,8 @@ const ForgotPasswordBox = ({ onBack, onSuccess }) => {
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.9 }}
                                 className={`p-4 rounded-xl text-xs font-semibold flex items-center gap-2 mb-6 ${status.type === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
-                                        status.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                            'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                    status.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                        'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                                     }`}
                             >
                                 {status.type === 'loading' && <RefreshCw className="w-4 h-4 animate-spin" />}
