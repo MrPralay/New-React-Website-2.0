@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import bgImage from '../../assets/dark_floating_pyramids_bg.png';
 import sideImage from '../../assets/green_pyramid_login.png';
 
-const LoginBox = ({ onSwitch, onBack, onLoginSuccess }) => {
+const LoginBox = ({ onSwitch, onBack, onLoginSuccess, onForgot }) => {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [status, setStatus] = useState({ type: '', message: '' });
 
@@ -162,7 +162,17 @@ const LoginBox = ({ onSwitch, onBack, onLoginSuccess }) => {
                             </div>
                         </div>
 
-                        <button type="submit" className="login-btn mt-4">
+                        <div className="flex justify-end p-1">
+                            <button
+                                type="button"
+                                onClick={onForgot}
+                                className="text-[10px] text-gray-500 hover:text-emerald-400 uppercase tracking-widest font-bold transition-all"
+                            >
+                                [ Forgot Password? ]
+                            </button>
+                        </div>
+
+                        <button type="submit" className="login-btn mt-2">
                             {status.type === 'loading' ? 'Analyzing...' : 'Secure Access'}
                         </button>
                     </form>

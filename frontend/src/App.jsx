@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import LoginBox from './components/Login/LoginBox';
 import SignUpBox from './components/Login/SignUpBox';
 import OTPBox from './components/Login/OTPBox';
+import ForgotPasswordBox from './components/Login/ForgotPasswordBox';
 import LandingPage from './components/Login/LandingPage';
 import InstagramLayout from './components/Social/InstagramLayout';
 
@@ -126,6 +127,22 @@ function App() {
                             onSwitch={() => setView('signup')}
                             onBack={() => setView('landing')}
                             onLoginSuccess={handleLoginSuccess}
+                            onForgot={() => setView('forgot')}
+                        />
+                    </motion.div>
+                )}
+                {view === 'forgot' && (
+                    <motion.div
+                        key="forgot"
+                        variants={pageVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        transition={{ duration: 0.4 }}
+                    >
+                        <ForgotPasswordBox
+                            onBack={() => setView('login')}
+                            onSuccess={() => setView('login')}
                         />
                     </motion.div>
                 )}

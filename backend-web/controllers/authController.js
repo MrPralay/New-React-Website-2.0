@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import getPrisma from '../prisma/db.js';
-import { sendOTP } from '../utils/email.js';
+import { sendOTP, sendResetOTP } from '../utils/email.js';
 
 export const register = async (c) => {
     try {
@@ -151,5 +151,77 @@ export const login = async (c) => {
     } catch (error) {
         console.error("Login Error:", error);
         return c.json({ success: false, error: `Neural link failure: ${error.message}` }, 500);
+    }
+};
+
+export const forgotPassword = async (c) => {
+    try {
+        const { email } = await c.req.json();
+        const prisma = getPrisma(c.env.DATABASE_URL);
+
+        const user = await prisma.user.findUnique({
+            where: { email },
+            select: { id: true, username: true, email: true, name: true, profileImage: true }
+        });
+
+        if (!user) {
+            return c.json({ success: false, error: "No neural record found for this address" }, 404);
+        }
+
+        // Generate OTP for reset
+        const otp = Math.floor(1000 + Math.random() * 9000).toString();
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { otp, otpExpires }
+        });
+
+        // Send reset OTP
+        const emailSent = await sendResetOTP(email, otp, c.env);
+
+        return c.json({
+            success: true,
+            message: "Recovery code transmitted to your email",
+            user: {
+                username: user.username,
+                name: user.name,
+                image: user.profileImage,
+                email: user.email
+            }
+        });
+    } catch (error) {
+        console.error("Forgot Password Error:", error);
+        return c.json({ success: false, error: `Recovery fail: ${error.message}` }, 500);
+    }
+};
+
+export const resetPassword = async (c) => {
+    try {
+        const { email, otp, newPassword } = await c.req.json();
+        const prisma = getPrisma(c.env.DATABASE_URL);
+
+        const user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user) return c.json({ success: false, error: "Neural record not found" }, 404);
+        if (user.otp !== otp) return c.json({ success: false, error: "Invalid recovery code" }, 400);
+        if (new Date() > user.otpExpires) return c.json({ success: false, error: "Recovery code expired" }, 400);
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashedPassword,
+                otp: null,
+                otpExpires: null,
+                isVerified: true // Auto-verify if they reset password
+            }
+        });
+
+        return c.json({ success: true, message: "Neural key successfully recalibrated" });
+    } catch (error) {
+        console.error("Reset Password Error:", error);
+        return c.json({ success: false, error: `Recalibration fail: ${error.message}` }, 500);
     }
 };
