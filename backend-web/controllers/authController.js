@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { setCookie } from 'hono/cookie';
+import { setCookie, deleteCookie } from 'hono/cookie';
 import getPrisma from '../prisma/db.js';
 import { sendOTP, sendResetOTP } from '../utils/email.js';
 
@@ -265,5 +265,21 @@ export const resetPassword = async (c) => {
     } catch (error) {
         console.error("Reset Password Error:", error);
         return c.json({ success: false, error: `Recalibration fail: ${error.message}` }, 500);
+    }
+};
+
+export const logout = async (c) => {
+    try {
+        // Clear Cookies
+        deleteCookie(c, 'session_id', { path: '/', secure: true, sameSite: 'None' });
+        deleteCookie(c, 'synapse_token', { path: '/', secure: true, sameSite: 'None' });
+
+        return c.json({
+            success: true,
+            message: "Neural link severed successfully"
+        });
+    } catch (error) {
+        console.error("Logout Error:", error);
+        return c.json({ success: false, error: "Failed to sever link" }, 500);
     }
 };

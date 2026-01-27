@@ -37,7 +37,16 @@ function App() {
         setView('login');
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        try {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            await fetch(`${apiUrl}/api/auth/logout`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error("Neural logout failed:", error);
+        }
         setUser(null);
         localStorage.removeItem('synapse_user');
         setView('landing');
