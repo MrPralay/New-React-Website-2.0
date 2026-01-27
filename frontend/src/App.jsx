@@ -7,13 +7,9 @@ import ForgotPasswordBox from './components/Login/ForgotPasswordBox';
 import LandingPage from './components/Login/LandingPage';
 import InstagramLayout from './components/Social/InstagramLayout';
 
+// Synapse Core Logo
 const SynapseLogo = ({ size = 60 }) => (
-    <motion.div
-        style={{ width: size, height: size }}
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="relative flex items-center justify-center"
-    >
+    <motion.div style={{ width: size, height: size }} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="relative flex items-center justify-center">
         <motion.div animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} className="absolute inset-0 border-2 border-emerald-500/20 rotate-45 rounded-sm" />
         <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.8, 0.3], rotate: 45 }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} className="w-1/2 h-1/2 bg-emerald-500 shadow-[0_0_20px_#10b981] rounded-sm" />
         {[0, 1, 2, 3].map((i) => (
@@ -26,16 +22,16 @@ function App() {
     const [user, setUser] = useState(null);
     const [view, setView] = useState('landing');
     const [isLoading, setIsLoading] = useState(true);
-    const [otpEmail, setOtpEmail] = useState('');
     const [isExited, setIsExited] = useState(false);
-    const [isShuttingDown, setIsShuttingDown] = useState(false);
+    const [otpEmail, setOtpEmail] = useState('');
 
     const LIVE_API = "https://synapse-backend.pralayd140.workers.dev";
 
     useEffect(() => {
-        const verifySessionGhost = async () => {
-            // 1. Check for the Session Ghost (Vanishes when tab closes)
+        const performNeuralSync = async () => {
+            // Restore from Session (survives refreshes)
             const token = sessionStorage.getItem('synapse_session_token');
+            const savedUser = sessionStorage.getItem('synapse_session_user');
 
             if (!token) {
                 setTimeout(() => setIsLoading(false), 800);
@@ -43,7 +39,7 @@ function App() {
             }
 
             try {
-                // 2. Validate with Neural Core
+                // Background Verification
                 const response = await fetch(`${LIVE_API}/api/auth/me`, {
                     method: 'GET',
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -53,38 +49,42 @@ function App() {
                     const data = await response.json();
                     setUser(data.user);
                     setView('profile');
-                    console.log("Neural Ghost Synchronized.");
-                } else {
-                    sessionStorage.removeItem('synapse_session_token');
-                    setView('landing');
+                    sessionStorage.setItem('synapse_session_user', JSON.stringify(data.user));
+                } else if (response.status === 401 || response.status === 403) {
+                    // Only log out if the session is explicitly invalid
+                    handleLogout();
+                } else if (savedUser) {
+                    // If server is just slow/down, use the last known profile from session
+                    setUser(JSON.parse(savedUser));
+                    setView('profile');
                 }
-            } catch (error) {
-                console.error("Neural sync interrupted.");
-                setView('landing');
+            } catch (err) {
+                if (savedUser) {
+                    setUser(JSON.parse(savedUser));
+                    setView('profile');
+                }
             } finally {
                 setTimeout(() => setIsLoading(false), 1200);
             }
         };
 
-        verifySessionGhost();
+        performNeuralSync();
     }, []);
 
     const handleLoginSuccess = (loginData) => {
         const { user: userData, token } = loginData;
         setUser(userData);
-        // Save to Session Ghost ( survives refresh, dies on tab close )
         if (token) sessionStorage.setItem('synapse_session_token', token);
+        sessionStorage.setItem('synapse_session_user', JSON.stringify(userData));
         setView('profile');
     };
 
     const handleLogout = async () => {
-        try { await fetch(`${LIVE_API}/api/auth/logout`, { method: 'POST', credentials: 'include' }); } catch (e) { }
+        try { await fetch(`${LIVE_API}/api/auth/logout`, { method: 'POST' }); } catch (e) { }
         setUser(null);
-        sessionStorage.removeItem('synapse_session_token');
+        sessionStorage.clear();
         setView('landing');
     };
-
-    const pageVariants = { initial: { opacity: 0, x: 20 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -20 } };
 
     if (isLoading) {
         return (
@@ -104,17 +104,19 @@ function App() {
             <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 text-center">
                 <SynapseLogo size={40} />
                 <h1 className="text-2xl font-bold tracking-tighter text-white mb-2 italic mt-8">Connection Severed</h1>
-                <button onClick={() => setIsExited(false)} className="mt-16 text-[9px] text-gray-700 hover:text-emerald-500/50 uppercase tracking-[0.3em] font-bold transition-colors"> [ Re-initialize Link ] </button>
+                <button onClick={() => setIsExited(false)} className="mt-16 text-[9px] text-gray-700 hover:text-emerald-500/50 uppercase tracking-[0.3em] font-bold transition-colors">[ Re-initialize Link ]</button>
             </div>
         );
     }
 
+    const pageVariants = { initial: { opacity: 0, x: 20 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -20 } };
+
     return (
-        <motion.div className="App bg-black min-h-screen" animate={isShuttingDown ? { scaleY: 0.001, opacity: 0, transition: { duration: 0.8, ease: "easeInOut" } } : { scaleY: 1, opacity: 1 }}>
+        <motion.div className="App bg-black min-h-screen">
             <AnimatePresence mode="wait">
                 {view === 'landing' && (
                     <motion.div key="landing" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.5 }}>
-                        <LandingPage onLogin={() => setView('login')} onRegister={() => setView('signup')} onExit={() => setIsShuttingDown(true)} />
+                        <LandingPage onLogin={() => setView('login')} onRegister={() => setView('signup')} onExit={() => setIsExited(true)} />
                     </motion.div>
                 )}
                 {view === 'login' && (

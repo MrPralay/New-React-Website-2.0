@@ -290,7 +290,7 @@ export const getMe = async (c) => {
 
         // 1. Get token from Cookies OR Authorization Header (for flexibility)
         const cookieToken = c.req.cookie('synapse_token');
-        const authHeader = c.req.header('Authorization');
+        const authHeader = c.req.header('authorization');
         const token = cookieToken || (authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null);
 
         if (!token) return c.json({ success: false, error: "No neural link found" }, 401);

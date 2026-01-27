@@ -5,7 +5,7 @@ const authenticateToken = async (c, next) => {
     const cookieToken = c.req.cookie('synapse_token');
 
     // 2. Fallback to Authorization Header (Backup way)
-    const authHeader = c.req.header('Authorization');
+    const authHeader = c.req.header('authorization');
     const headerToken = authHeader && authHeader.split(' ')[1];
 
     const token = cookieToken || headerToken;
