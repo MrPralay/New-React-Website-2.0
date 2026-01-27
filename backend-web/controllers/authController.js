@@ -159,23 +159,7 @@ export const login = async (c) => {
             }
         });
 
-        // SET PROFESSIONAL COOKIES (Visible in DevTools -> Application -> Cookies)
-        setCookie(c, 'session_id', session.id, {
-            path: '/',
-            secure: true,
-            httpOnly: true,
-            maxAge: 7200,
-            sameSite: 'None',
-        });
-
-        setCookie(c, 'synapse_token', token, {
-            path: '/',
-            secure: true,
-            httpOnly: true,
-            maxAge: 7200,
-            sameSite: 'None',
-        });
-
+        // Return session data (Frontend can handle it if needed)
         return c.json({
             success: true,
             token,
@@ -270,9 +254,8 @@ export const resetPassword = async (c) => {
 
 export const logout = async (c) => {
     try {
-        // Clear Cookies
-        deleteCookie(c, 'session_id', { path: '/', secure: true, sameSite: 'None' });
-        deleteCookie(c, 'synapse_token', { path: '/', secure: true, sameSite: 'None' });
+        // No cookies to clear on backend as they are managed by frontend
+        // If you ever use httpOnly cookies again, clear them here.
 
         return c.json({
             success: true,

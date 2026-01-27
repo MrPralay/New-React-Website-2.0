@@ -101,7 +101,7 @@ function App() {
                     Cookies.set('synapse_session_user', JSON.stringify(data.user), {
                         expires: 7, // 7 days
                         secure: true,
-                        sameSite: 'strict'
+                        sameSite: 'Lax'
                     });
                 } else if (response.status === 401 || response.status === 403) {
                     const errorData = await response.json().catch(() => ({}));
@@ -159,7 +159,7 @@ function App() {
         Cookies.set('synapse_session_user', JSON.stringify(userData), {
             expires: 7, // 7 days
             secure: true,
-            sameSite: 'strict'
+            sameSite: 'Lax'
         });
         console.log('🍪 User data cookie set successfully');
         setView('profile');
@@ -171,7 +171,6 @@ function App() {
         setUser(null);
         // Clear ALL possible session cookies to be safe
         Cookies.remove('synapse_token');
-        Cookies.remove('synapse_session_token');
         Cookies.remove('synapse_session_user');
         Cookies.remove('session_id');
 
