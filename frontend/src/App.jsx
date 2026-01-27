@@ -93,10 +93,11 @@ function App() {
         checkSession();
     }, []);
 
-    const handleLoginSuccess = (userData, token) => {
+    const handleLoginSuccess = (loginData) => {
+        const { user: userData, token } = loginData;
         setUser(userData);
         localStorage.setItem('synapse_user', JSON.stringify(userData));
-        if (token) localStorage.setItem('synapse_token', token); // Save backup identity
+        if (token) localStorage.setItem('synapse_token', token);
         setView('profile');
     };
 
@@ -175,7 +176,7 @@ function App() {
                         <LoginBox
                             onSwitch={() => setView('signup')}
                             onBack={() => setView('landing')}
-                            onLoginSuccess={(data) => handleLoginSuccess(data, data.token)}
+                            onLoginSuccess={handleLoginSuccess}
                             onForgot={() => setView('forgot')}
                         />
                     </motion.div>

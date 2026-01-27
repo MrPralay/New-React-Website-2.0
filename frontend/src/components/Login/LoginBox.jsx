@@ -70,7 +70,7 @@ const LoginBox = ({ onSwitch, onBack, onLoginSuccess, onForgot }) => {
             const data = await response.json();
             if (response.ok) {
                 setStatus({ type: 'success', message: 'Identity Confirmed. Accessing Synapse...' });
-                setTimeout(() => onLoginSuccess(data.user), 1500);
+                setTimeout(() => onLoginSuccess(data), 1500);
             } else {
                 const errorMessage = data.details ? `${data.error}: ${data.details}` : data.error;
                 setStatus({ type: 'error', message: errorMessage });
