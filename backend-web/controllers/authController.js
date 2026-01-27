@@ -160,6 +160,7 @@ export const login = async (c) => {
         });
 
         // Return session data (Frontend can handle it if needed)
+        c.header('X-Synapse-Debug', 'v3-no-cookies');
         return c.json({
             success: true,
             token,
