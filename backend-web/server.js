@@ -19,11 +19,19 @@ app.use('*', secureHeaders());
 app.use('*', cors({
     origin: (origin) => origin, // Dynamically allow the requesting origin to support cookies
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Authorization'],
+    allowHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     exposeHeaders: ['Content-Length'],
     maxAge: 600,
     credentials: true,
 }));
+
+// Fallback for some browsers to ensure credentials are sent
+app.use('*', async (c, next) => {
+    await next();
+    if (c.req.header('Origin')) {
+        c.header('Access-Control-Allow-Credentials', 'true');
+    }
+});
 
 // Professional Error Handling
 app.onError((err, c) => {
