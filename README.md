@@ -94,3 +94,4 @@ Ensure you have the following installed:
 - **Web Backend**: http://localhost:5000
 - **AI Backend**: http://localhost:8000
 - **Database (PostgreSQL)**: localhost:5432 (or 5433 if using Docker)
+# New-React-Website-2.0
