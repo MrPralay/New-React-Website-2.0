@@ -39,6 +39,13 @@ function App() {
             // Restore from Cookies (survives refreshes and browser sessions)
             const token = Cookies.get('synapse_session_token');
             const savedUser = Cookies.get('synapse_session_user');
+            
+            console.log('🔍 Token Debug:', {
+                hasToken: !!token,
+                tokenLength: token ? token.length : 0,
+                tokenPreview: token ? token.substring(0, 50) + '...' : 'none',
+                tokenType: typeof token
+            });
 
             if (!token) {
                 setTimeout(() => setIsLoading(false), 800);
@@ -65,13 +72,21 @@ function App() {
 
             try {
                 // Background Verification (non-blocking)
+                console.log('🌐 Making API call with token:', token.substring(0, 50) + '...');
                 const response = await fetch(`${LIVE_API}/api/auth/me`, {
                     method: 'GET',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
+                console.log('📡 API Response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok
+                });
+
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('✅ API Success:', data);
                     setUser(data.user);
                     setView('profile');
                     userLoggedIn = true;
@@ -82,7 +97,9 @@ function App() {
                         sameSite: 'strict'
                     });
                 } else if (response.status === 401 || response.status === 403) {
-                    console.warn('Token invalid, logging out...');
+                    const errorData = await response.json().catch(() => ({}));
+                    console.warn('🚫 Token invalid - Error:', errorData);
+                    console.log('🚪 Calling handleLogout due to invalid token');
                     // SECURITY: Always logout on invalid tokens
                     handleLogout();
                     userLoggedIn = false;
@@ -115,6 +132,12 @@ function App() {
 
     const handleLoginSuccess = (loginData) => {
         const { user: userData, token } = loginData;
+        console.log('🔑 Login Success - Token Debug:', {
+            hasToken: !!token,
+            tokenLength: token ? token.length : 0,
+            tokenPreview: token ? token.substring(0, 50) + '...' : 'none',
+            userData: userData
+        });
         setUser(userData);
         if (token) {
             // Set secure authentication token cookie
@@ -123,6 +146,7 @@ function App() {
                 secure: true,
                 sameSite: 'strict'
             });
+            console.log('🍪 Token cookie set successfully');
         }
         // Set user data cookie
         Cookies.set('synapse_session_user', JSON.stringify(userData), { 
@@ -130,6 +154,7 @@ function App() {
             secure: true,
             sameSite: 'strict'
         });
+        console.log('🍪 User data cookie set successfully');
         setView('profile');
     };
 
