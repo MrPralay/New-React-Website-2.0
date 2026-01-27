@@ -1,19 +1,25 @@
 import jwt from 'jsonwebtoken';
 
 const authenticateToken = async (c, next) => {
-    const authHeader = c.req.header('authorization');
-    const token = authHeader && authHeader.split(' ')[1];
+    // 1. Try Cookie first (Professional way)
+    const cookieToken = c.req.cookie('synapse_token');
+
+    // 2. Fallback to Authorization Header (Backup way)
+    const authHeader = c.req.header('Authorization');
+    const headerToken = authHeader && authHeader.split(' ')[1];
+
+    const token = cookieToken || headerToken;
 
     if (!token) {
-        return c.json({ success: false, error: "Authentication token required" }, 401);
+        return c.json({ success: false, error: "Neural authorization missing" }, 401);
     }
 
     try {
-        const user = jwt.verify(token, c.env.JWT_SECRET || 'fallback_secret_change_me');
+        const user = jwt.verify(token, c.env.JWT_SECRET || 'fallback_secret');
         c.set('user', user);
         await next();
     } catch (err) {
-        return c.json({ success: false, error: "Invalid or expired token" }, 403);
+        return c.json({ success: false, error: "Neural link expired or corrupted" }, 403);
     }
 };
 

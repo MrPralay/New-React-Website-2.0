@@ -7,7 +7,6 @@ import ForgotPasswordBox from './components/Login/ForgotPasswordBox';
 import LandingPage from './components/Login/LandingPage';
 import InstagramLayout from './components/Social/InstagramLayout';
 
-// High-End SynapseX Neural Core Logo Component
 const SynapseLogo = ({ size = 60 }) => (
     <motion.div
         style={{ width: size, height: size }}
@@ -15,39 +14,23 @@ const SynapseLogo = ({ size = 60 }) => (
         animate={{ opacity: 1, scale: 1 }}
         className="relative flex items-center justify-center"
     >
-        {/* Outer Diamond Ring */}
         <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
             className="absolute inset-0 border-2 border-emerald-500/20 rotate-45 rounded-sm"
         />
-
-        {/* Inner Pulsing Diamond */}
         <motion.div
-            animate={{
-                scale: [1, 1.2, 1],
-                opacity: [0.3, 0.8, 0.3],
-                rotate: 45
-            }}
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.8, 0.3], rotate: 45 }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className="w-1/2 h-1/2 bg-emerald-500 shadow-[0_0_20px_#10b981] rounded-sm"
         />
-
-        {/* Neural Connections (Floating Particles) */}
         {[0, 1, 2, 3].map((i) => (
             <motion.div
                 key={i}
-                animate={{
-                    y: [-10, 10, -10],
-                    x: i % 2 === 0 ? [-5, 5, -5] : [5, -5, 5],
-                    opacity: [0, 1, 0]
-                }}
+                animate={{ y: [-10, 10, -10], x: i % 2 === 0 ? [-5, 5, -5] : [5, -5, 5], opacity: [0, 1, 0] }}
                 transition={{ duration: 3, delay: i * 0.5, repeat: Infinity }}
                 className="absolute w-1 h-1 bg-emerald-400 rounded-full"
-                style={{
-                    top: i < 2 ? '0%' : '100%',
-                    left: i % 2 === 0 ? '0%' : '100%'
-                }}
+                style={{ top: i < 2 ? '0%' : '100%', left: i % 2 === 0 ? '0%' : '100%' }}
             />
         ))}
     </motion.div>
@@ -64,6 +47,7 @@ function App() {
     useEffect(() => {
         const checkSession = async () => {
             const storedUser = localStorage.getItem('synapse_user');
+            const token = localStorage.getItem('synapse_token'); // Get backup token
 
             if (!storedUser) {
                 setTimeout(() => setIsLoading(false), 1200);
@@ -74,7 +58,10 @@ function App() {
                 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
                 const response = await fetch(`${apiUrl}/api/auth/me`, {
                     method: 'GET',
-                    credentials: 'include'
+                    credentials: 'include',
+                    headers: {
+                        'Authorization': `Bearer ${token}` // Send backup identity header
+                    }
                 });
 
                 if (response.ok) {
@@ -83,10 +70,14 @@ function App() {
                     setView('profile');
                     localStorage.setItem('synapse_user', JSON.stringify(data.user));
                 } else {
+                    // Only boot if the session is truly dead on the server
                     localStorage.removeItem('synapse_user');
+                    localStorage.removeItem('synapse_token');
+                    setView('landing');
                 }
             } catch (error) {
-                console.warn("Using offline fallback.");
+                // If offline, keep the last known user
+                console.warn("Neural Core Offline - Mode: Local Persistence");
                 setUser(JSON.parse(storedUser));
                 setView('profile');
             } finally {
@@ -97,19 +88,11 @@ function App() {
         checkSession();
     }, []);
 
-    const handleLoginSuccess = (userData) => {
+    const handleLoginSuccess = (userData, token) => {
         setUser(userData);
         localStorage.setItem('synapse_user', JSON.stringify(userData));
+        if (token) localStorage.setItem('synapse_token', token); // Save backup identity
         setView('profile');
-    };
-
-    const handleRegistrationSuccess = (email) => {
-        setOtpEmail(email);
-        setView('otp');
-    };
-
-    const handleOTPVerified = () => {
-        setView('login');
     };
 
     const handleLogout = async () => {
@@ -119,11 +102,11 @@ function App() {
                 method: 'POST',
                 credentials: 'include'
             });
-        } catch (error) {
-            console.error("Neural logout failed:", error);
-        }
+        } catch (error) { console.error("Neural logout failed:", error); }
+
         setUser(null);
         localStorage.removeItem('synapse_user');
+        localStorage.removeItem('synapse_token');
         setView('landing');
     };
 
@@ -138,11 +121,7 @@ function App() {
             <div className="min-h-screen bg-black flex items-center justify-center">
                 <div className="flex flex-col items-center">
                     <SynapseLogo size={50} />
-                    <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="text-emerald-500 text-[9px] uppercase tracking-[0.4em] font-bold mt-10 ml-1"
-                    >
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-emerald-500 text-[9px] uppercase tracking-[0.4em] font-bold mt-10 ml-1">
                         Neural Synchronization
                     </motion.p>
                 </div>
@@ -156,7 +135,6 @@ function App() {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
                     <SynapseLogo size={40} />
                     <h1 className="text-2xl font-bold tracking-tighter text-white mb-2 italic mt-8">Connection Severed</h1>
-                    <p className="text-gray-500 text-[10px] uppercase tracking-widest font-bold">The Neural Gateway has been decommissioned</p>
                     <button onClick={() => setIsExited(false)} className="mt-16 text-[9px] text-gray-700 hover:text-emerald-500/50 uppercase tracking-[0.3em] font-bold transition-colors">
                         [ Re-initialize Link ]
                     </button>
@@ -173,7 +151,7 @@ function App() {
                 if (isShuttingDown) {
                     setIsExited(true);
                     setIsShuttingDown(false);
-                    try { window.close(); } catch (e) { console.warn("Browser blocked window.close()"); }
+                    try { window.close(); } catch (e) { }
                 }
             }}
         >
@@ -192,31 +170,24 @@ function App() {
                         <LoginBox
                             onSwitch={() => setView('signup')}
                             onBack={() => setView('landing')}
-                            onLoginSuccess={handleLoginSuccess}
+                            onLoginSuccess={(data) => handleLoginSuccess(data, data.token)}
                             onForgot={() => setView('forgot')}
                         />
                     </motion.div>
                 )}
                 {view === 'forgot' && (
                     <motion.div key="forgot" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.4 }}>
-                        <ForgotPasswordBox
-                            onBack={() => setView('login')}
-                            onSuccess={() => setView('login')}
-                        />
+                        <ForgotPasswordBox onBack={() => setView('login')} onSuccess={() => setView('login')} />
                     </motion.div>
                 )}
                 {view === 'signup' && (
                     <motion.div key="signup" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.4 }}>
-                        <SignUpBox
-                            onSwitch={() => setView('login')}
-                            onBack={() => setView('landing')}
-                            onSuccess={handleRegistrationSuccess}
-                        />
+                        <SignUpBox onSwitch={() => setView('login')} onBack={() => setView('landing')} onSuccess={(email) => { setOtpEmail(email); setView('otp'); }} />
                     </motion.div>
                 )}
                 {view === 'otp' && (
                     <motion.div key="otp" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.4 }}>
-                        <OTPBox email={otpEmail} onVerified={handleOTPVerified} onBack={() => setView('signup')} />
+                        <OTPBox email={otpEmail} onVerified={() => setView('login')} onBack={() => setView('signup')} />
                     </motion.div>
                 )}
                 {view === 'profile' && user && (

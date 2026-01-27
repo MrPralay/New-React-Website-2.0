@@ -41,3 +41,33 @@ export const getProfile = async (c) => {
         return c.json({ success: false, error: "Search failed" }, 500);
     }
 };
+
+export const updateProfile = async (c) => {
+    try {
+        const { name, bio, profileImage } = await c.req.json();
+        const user = c.get('user');
+        const prisma = getPrisma(c.env.DATABASE_URL);
+
+        const updatedUser = await prisma.user.update({
+            where: { id: user.userId },
+            data: {
+                ...(name && { name }),
+                ...(bio && { bio }),
+                ...(profileImage && { profileImage })
+            },
+            select: {
+                id: true,
+                username: true,
+                name: true,
+                bio: true,
+                profileImage: true,
+                riskScore: true
+            }
+        });
+
+        return c.json({ success: true, data: updatedUser });
+    } catch (error) {
+        console.error("Profile Update Error:", error);
+        return c.json({ success: false, error: "Neural recalibration failed" }, 500);
+    }
+};
