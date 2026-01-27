@@ -9,7 +9,7 @@ const authenticateToken = async (c, next) => {
     }
 
     try {
-        const user = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_change_me');
+        const user = jwt.verify(token, c.env.JWT_SECRET || 'fallback_secret_change_me');
         c.set('user', user);
         await next();
     } catch (err) {

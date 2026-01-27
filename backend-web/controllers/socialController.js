@@ -1,8 +1,8 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import getPrisma from '../prisma/db.js';
 
 export const getFeed = async (c) => {
     try {
+        const prisma = getPrisma(c.env.DATABASE_URL);
         const posts = await prisma.post.findMany({
             take: 20,
             orderBy: { createdAt: 'desc' },
@@ -26,6 +26,7 @@ export const createPost = async (c) => {
     try {
         const { caption, imageUrl } = await c.req.json();
         const user = c.get('user');
+        const prisma = getPrisma(c.env.DATABASE_URL);
 
         if (!imageUrl) {
             return c.json({ success: false, error: "Image URL is required" }, 400);

@@ -1,9 +1,9 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import getPrisma from '../prisma/db.js';
 
 export const getProfile = async (c) => {
     const username = c.req.param('username');
     try {
+        const prisma = getPrisma(c.env.DATABASE_URL);
         const user = await prisma.user.findUnique({
             where: { username },
             select: {

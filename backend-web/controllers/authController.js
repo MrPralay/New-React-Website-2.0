@@ -1,12 +1,11 @@
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-
-const prisma = new PrismaClient();
+import getPrisma from '../prisma/db.js';
 
 export const register = async (c) => {
     try {
         const { name, username, email, password } = await c.req.json();
+        const prisma = getPrisma(c.env.DATABASE_URL);
 
         // Validation
         if (!email || !password || !username) {
@@ -29,7 +28,7 @@ export const register = async (c) => {
             success: true,
             message: "Neural fingerprint created successfully",
             userId: user.id
-        }, 210); // Futuristic status or just 201
+        }, 201);
     } catch (error) {
         console.error("Registration Error:", error);
 
@@ -40,7 +39,7 @@ export const register = async (c) => {
         return c.json({
             success: false,
             error: "Neural Connection Error",
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            details: c.env.NODE_ENV === 'development' ? error.message : undefined
         }, 500);
     }
 };
@@ -48,6 +47,7 @@ export const register = async (c) => {
 export const login = async (c) => {
     try {
         const { email, password, behaviorData } = await c.req.json();
+        const prisma = getPrisma(c.env.DATABASE_URL);
 
         if (!email || !password) {
             return c.json({ success: false, error: "Credentials required" }, 400);
@@ -59,7 +59,7 @@ export const login = async (c) => {
         }
 
         let riskScore = 0.0;
-        const aiBackendUrl = process.env.AI_BACKEND_URL;
+        const aiBackendUrl = c.env.AI_BACKEND_URL;
 
         if (aiBackendUrl) {
             try {
@@ -89,7 +89,7 @@ export const login = async (c) => {
 
         const token = jwt.sign(
             { userId: user.id, username: user.username, role: user.role },
-            process.env.JWT_SECRET || 'fallback_secret_change_me',
+            c.env.JWT_SECRET || 'fallback_secret_change_me',
             { expiresIn: '2h' }
         );
 
