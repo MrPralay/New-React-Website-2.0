@@ -272,8 +272,12 @@ export const logout = async (c) => {
 export const getMe = async (c) => {
     try {
         const prisma = getPrisma(c.env.DATABASE_URL);
+        c.header('X-Synapse-Debug', 'v5-sync-active');
 
-        // 1. Get token from Cookies OR Authorization Header (for flexibility)
+        // Aggressively clear any conflicting domain cookies
+        deleteCookie(c, 'session_id', { path: '/', secure: true, sameSite: 'None' });
+        deleteCookie(c, 'synapse_token', { path: '/', secure: true, sameSite: 'None' });
+
         const cookieToken = c.req.cookie('synapse_token');
         const authHeader = c.req.header('authorization');
         const token = cookieToken || (authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null);

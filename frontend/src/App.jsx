@@ -76,17 +76,14 @@ function App() {
 
             try {
                 // Background Verification (non-blocking)
-                console.log('🌐 Making API call with token:', token.substring(0, 50) + '...');
+                console.log('🌐 Syncing session with token...');
                 const response = await fetch(`${LIVE_API}/api/auth/me`, {
                     method: 'GET',
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    credentials: 'include'
                 });
 
-                console.log('📡 API Response:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    ok: response.ok
-                });
+                console.log('📡 Sync Response Status:', response.status);
 
                 if (response.ok) {
                     const data = await response.json();
